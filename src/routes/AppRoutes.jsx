@@ -10,6 +10,7 @@ import ExportPage from "@/pages/export/ExportPage";
 
 
 import HistoryPage from "@/pages/history/HistoryPage";
+import AlertsPage from "@/pages/alerts/AlertsPage";
 
 const AppRoutes = () => {
   return (
@@ -25,6 +26,7 @@ const AppRoutes = () => {
 
 
       <Route path="/history" element={<HistoryPage />} />
+      <Route path="/alerts" element={<AlertsPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
