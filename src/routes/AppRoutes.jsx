@@ -4,6 +4,7 @@ import NotFound from "../pages/notFound/NotFound";
 import UsersPage from "@/pages/users/UsersPage";
 import CategoriesPage from "@/pages/categories/CategoriesPage";
 import SuppliersPage from "@/pages/suppliers/SuppliersPage";
+import DashboardPage from "@/pages/dashboard/DashboardPage";
 import ImportPage from "@/pages/import/ImportPage";
 import ExportPage from "@/pages/export/ExportPage";
 
@@ -29,6 +30,7 @@ const AppRoutes = () => {
       <Route path="/history" element={<HistoryPage />} />
       <Route path="/alerts" element={<AlertsPage />} />
       <Route path="/reports" element={<ReportsPage />} />
+      <Route path="/" element={<DashboardPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
