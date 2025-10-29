@@ -5,6 +5,7 @@ import UsersPage from "@/pages/users/UsersPage";
 import CategoriesPage from "@/pages/categories/CategoriesPage";
 import SuppliersPage from "@/pages/suppliers/SuppliersPage";
 import ImportPage from "@/pages/import/ImportPage";
+import ExportPage from "@/pages/export/ExportPage";
 
 const AppRoutes = () => {
   return (
@@ -15,6 +16,8 @@ const AppRoutes = () => {
       <Route path="/suppliers" element={<SuppliersPage />} />
 
       <Route path="/import" element={<ImportPage />} />
+
+      <Route path="/export" element={<ExportPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
