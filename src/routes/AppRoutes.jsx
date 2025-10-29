@@ -7,6 +7,10 @@ import SuppliersPage from "@/pages/suppliers/SuppliersPage";
 import ImportPage from "@/pages/import/ImportPage";
 import ExportPage from "@/pages/export/ExportPage";
 
+
+
+import HistoryPage from "@/pages/history/HistoryPage";
+
 const AppRoutes = () => {
   return (
     <Routes>
@@ -18,6 +22,9 @@ const AppRoutes = () => {
       <Route path="/import" element={<ImportPage />} />
 
       <Route path="/export" element={<ExportPage />} />
+
+
+      <Route path="/history" element={<HistoryPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
