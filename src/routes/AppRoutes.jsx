@@ -1,11 +1,13 @@
 import { Route, Routes } from "react-router-dom";
 import Login from "../pages/login/login";
 import NotFound from "../pages/notFound/NotFound";
+import UsersPage from "@/pages/users/UsersPage";
 
 const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/users" element={<UsersPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
