@@ -7,12 +7,10 @@ import SuppliersPage from "@/pages/suppliers/SuppliersPage";
 import DashboardPage from "@/pages/dashboard/DashboardPage";
 import ImportPage from "@/pages/import/ImportPage";
 import ExportPage from "@/pages/export/ExportPage";
-
-
-
 import HistoryPage from "@/pages/history/HistoryPage";
 import AlertsPage from "@/pages/alerts/AlertsPage";
 import ReportsPage from "@/pages/reports/ReportsPage";
+import InventoryPage from "@/pages/inventory/InventoryPages";
 
 const AppRoutes = () => {
   return (
@@ -21,17 +19,14 @@ const AppRoutes = () => {
       <Route path="/users" element={<UsersPage />} />
       <Route path="/categories" element={<CategoriesPage />} />
       <Route path="/suppliers" element={<SuppliersPage />} />
-
+      <Route path="/inventory" element={<InventoryPage />} />
       <Route path="/import" element={<ImportPage />} />
-
       <Route path="/export" element={<ExportPage />} />
-
-
       <Route path="/history" element={<HistoryPage />} />
       <Route path="/alerts" element={<AlertsPage />} />
       <Route path="/reports" element={<ReportsPage />} />
       <Route path="/" element={<DashboardPage />} />
-      <Route path="*" element={<NotFound />} />
+      <Route path="*" element={<Login />} />
     </Routes>
   );
 };
