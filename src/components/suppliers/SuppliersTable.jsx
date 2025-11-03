@@ -15,66 +15,35 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Edit, Trash2, Phone, Mail, MapPin } from "lucide-react";
-import { EditSupplierDialog } from "./dialog/EditSupplierDialog";
-import { DeleteSupplierDialog } from "./dialog/DeleteSupplierDialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  MoreVertical,
+  Edit,
+  Trash2,
+  Phone,
+  Mail,
+  MapPin,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+} from "lucide-react";
+import { EditSupplierDialog } from "./dialogs/EditSupplierDialog";
+import { DeleteSupplierDialog } from "./dialogs/DeleteSupplierDialog";
 
-const suppliers = [
-  {
-    id: "1",
-    code: "NCC001",
-    name: "Công ty TNHH Dược phẩm Việt Nam",
-    taxId: "0123456789",
-    contactPerson: "Nguyễn Văn A",
-    phone: "0901234567",
-    email: "contact@duocphamvn.com",
-    address: "123 Đường ABC, Quận 1, TP.HCM",
-    status: "active",
-    totalOrders: 156,
-    lastOrder: "05/01/2025",
-  },
-  {
-    id: "2",
-    code: "NCC002",
-    name: "Công ty CP Dược Hậu Giang",
-    taxId: "0234567890",
-    contactPerson: "Trần Thị B",
-    phone: "0912345678",
-    email: "sales@dhg.com.vn",
-    address: "456 Đường XYZ, Quận 3, TP.HCM",
-    status: "active",
-    totalOrders: 203,
-    lastOrder: "08/01/2025",
-  },
-  {
-    id: "3",
-    code: "NCC003",
-    name: "Công ty TNHH Thiết bị Y tế Medico",
-    taxId: "0345678901",
-    contactPerson: "Lê Văn C",
-    phone: "0923456789",
-    email: "info@medico.vn",
-    address: "789 Đường DEF, Quận 5, TP.HCM",
-    status: "active",
-    totalOrders: 89,
-    lastOrder: "10/01/2025",
-  },
-  {
-    id: "4",
-    code: "NCC004",
-    name: "Công ty CP Dược phẩm Traphaco",
-    taxId: "0456789012",
-    contactPerson: "Phạm Thị D",
-    phone: "0934567890",
-    email: "contact@traphaco.com.vn",
-    address: "321 Đường GHI, Quận 10, TP.HCM",
-    status: "inactive",
-    totalOrders: 45,
-    lastOrder: "15/12/2024",
-  },
-];
-
-export function SuppliersTable() {
+export function SuppliersTable({
+  suppliers,
+  loading,
+  pagination,
+  onPageChange,
+  onLimitChange,
+  onEditSupplier,
+}) {
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -88,6 +57,36 @@ export function SuppliersTable() {
     setSelectedSupplier(supplier);
     setIsDeleteDialogOpen(true);
   };
+
+  const handleEditSuccess = async (supplierData) => {
+    await onEditSupplier(selectedSupplier.id, supplierData);
+    setIsEditDialogOpen(false);
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "Chưa có";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("vi-VN");
+  };
+
+  if (loading) {
+    return (
+      <div className="bg-card rounded-lg border border-border p-12 flex items-center justify-center">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Loader2 className="w-5 h-5 animate-spin" />
+          <span>Đang tải dữ liệu...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!suppliers || suppliers.length === 0) {
+    return (
+      <div className="bg-card rounded-lg border border-border p-12 text-center">
+        <p className="text-muted-foreground">Không có nhà cung cấp nào</p>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -121,29 +120,31 @@ export function SuppliersTable() {
                   </div>
                 </TableCell>
                 <TableCell className="text-muted-foreground">
-                  {supplier.taxId}
+                  {supplier.taxCode || "-"}
                 </TableCell>
-                <TableCell>{supplier.contactPerson}</TableCell>
+                <TableCell>{supplier.contactName || "-"}</TableCell>
                 <TableCell>
                   <div className="space-y-1">
                     <div className="text-sm flex items-center gap-1">
                       <Phone className="w-3 h-3 text-muted-foreground" />
-                      {supplier.phone}
+                      {supplier.contact?.phone}
                     </div>
                     <div className="text-sm flex items-center gap-1 text-muted-foreground">
                       <Mail className="w-3 h-3" />
-                      {supplier.email}
+                      {supplier.contact?.email}
                     </div>
                   </div>
                 </TableCell>
                 <TableCell>
                   <div>
                     <div className="font-medium">
-                      {supplier.totalOrders} đơn
+                      {supplier.orders?.count || 0} đơn
                     </div>
-                    <div className="text-sm text-muted-foreground">
-                      Gần nhất: {supplier.lastOrder}
-                    </div>
+                    {supplier.orders?.lastDate && (
+                      <div className="text-sm text-muted-foreground">
+                        Gần nhất: {formatDate(supplier.orders.lastDate)}
+                      </div>
+                    )}
                   </div>
                 </TableCell>
                 <TableCell>
@@ -186,6 +187,52 @@ export function SuppliersTable() {
             ))}
           </TableBody>
         </Table>
+
+        <div className="flex items-center justify-between px-6 py-4 border-t border-border">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span>Hiển thị</span>
+            <Select
+              value={pagination.limit.toString()}
+              onValueChange={(value) => onLimitChange(Number(value))}
+            >
+              <SelectTrigger className="h-8 w-16">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="25">25</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+                <SelectItem value="100">100</SelectItem>
+              </SelectContent>
+            </Select>
+            <span>của {pagination.total} nhà cung cấp</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">
+              Trang {pagination.page} / {pagination.pages}
+            </span>
+            <div className="flex gap-1">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => onPageChange(pagination.page - 1)}
+                disabled={pagination.page === 1}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => onPageChange(pagination.page + 1)}
+                disabled={pagination.page >= pagination.pages}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
 
       {selectedSupplier && (
@@ -194,6 +241,7 @@ export function SuppliersTable() {
             supplier={selectedSupplier}
             open={isEditDialogOpen}
             onOpenChange={setIsEditDialogOpen}
+            onSubmit={handleEditSuccess}
           />
           <DeleteSupplierDialog
             supplier={selectedSupplier}

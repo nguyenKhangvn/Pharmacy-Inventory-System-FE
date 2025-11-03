@@ -230,7 +230,7 @@ export function EditUserDialog({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="active">Hoạt động</SelectItem>
-                  <SelectItem value="inactive">Khóa</SelectItem>
+                  <SelectItem value="locked">Khóa</SelectItem>
                 </SelectContent>
               </Select>
             </div>

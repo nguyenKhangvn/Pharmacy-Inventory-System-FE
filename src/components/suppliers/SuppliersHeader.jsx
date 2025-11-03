@@ -1,11 +1,35 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Search, Plus } from "lucide-react";
-import { AddSupplierDialog } from "./dialog/AddSupplierDialog";
+import { AddSupplierDialog } from "./dialogs/AddSupplierDialog";
 
-export function SuppliersHeader() {
+export function SuppliersHeader({
+  onSearch,
+  onFilterChange,
+  onAddSupplier,
+  filterStatus,
+}) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
+
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchValue(value);
+    onSearch(value);
+  };
+
+  const handleAddSuccess = async (supplierData) => {
+    await onAddSupplier(supplierData);
+    setIsAddDialogOpen(false);
+  };
 
   return (
     <>
@@ -32,16 +56,33 @@ export function SuppliersHeader() {
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Tìm kiếm theo tên, mã số thuế, số điện thoại..."
+              value={searchValue}
+              onChange={handleSearchChange}
+              placeholder="Tìm kiếm theo tên, mã nhà cung cấp, mã số thuế..."
               className="pl-10"
             />
           </div>
+          <Select
+            value={filterStatus}
+            onValueChange={(value) => onFilterChange("status", value)}
+            defaultValue="all"
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Trạng thái" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tất cả</SelectItem>
+              <SelectItem value="active">Đang hoạt động</SelectItem>
+              <SelectItem value="locked">Ngừng hoạt động</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
       <AddSupplierDialog
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
+        onSubmit={handleAddSuccess}
       />
     </>
   );
