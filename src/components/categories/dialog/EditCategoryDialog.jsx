@@ -13,7 +13,13 @@ import {
 import { Label } from "@/components/ui/label";
 import { AlertCircle } from "lucide-react";
 
-export function EditCategoryDialog({ category, open, onOpenChange }) {
+export function EditCategoryDialog({
+  category,
+  open,
+  onOpenChange,
+  onSubmit,
+  loading,
+}) {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -23,8 +29,8 @@ export function EditCategoryDialog({ category, open, onOpenChange }) {
   useEffect(() => {
     if (category) {
       setFormData({
-        name: category.name,
-        description: category.description,
+        name: category.name || "",
+        description: category.description || "",
       });
     }
   }, [category]);
@@ -44,11 +50,16 @@ export function EditCategoryDialog({ category, open, onOpenChange }) {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (validateForm()) {
-      console.log("Updating category:", formData);
+    if (!validateForm()) return;
+
+    try {
+      await onSubmit(formData);
       onOpenChange(false);
+    } catch (error) {
+      // Error đã được xử lý trong parent
+      console.error("Error in dialog:", error);
     }
   };
 
@@ -67,7 +78,7 @@ export function EditCategoryDialog({ category, open, onOpenChange }) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name" className="text-black font-medium">
-              Tên danh mục
+              Tên danh mục <span className="text-red-500">*</span>
             </Label>
             <Input
               id="name"
@@ -77,6 +88,7 @@ export function EditCategoryDialog({ category, open, onOpenChange }) {
                 setFormData({ ...formData, name: e.target.value })
               }
               className={errors.name ? "border-red-500" : ""}
+              disabled={loading}
             />
             {errors.name && (
               <div className="flex items-center gap-2 text-red-500 text-sm">
@@ -88,7 +100,7 @@ export function EditCategoryDialog({ category, open, onOpenChange }) {
 
           <div className="space-y-2">
             <Label htmlFor="description" className="text-black font-medium">
-              Mô tả
+              Mô tả <span className="text-red-500">*</span>
             </Label>
             <Textarea
               id="description"
@@ -99,6 +111,7 @@ export function EditCategoryDialog({ category, open, onOpenChange }) {
               }
               className={errors.description ? "border-red-500" : ""}
               rows={4}
+              disabled={loading}
             />
             {errors.description && (
               <div className="flex items-center gap-2 text-red-500 text-sm">
@@ -113,14 +126,16 @@ export function EditCategoryDialog({ category, open, onOpenChange }) {
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
+              disabled={loading}
             >
               Hủy
             </Button>
             <Button
               type="submit"
               className="bg-medical-blue hover:bg-medical-blue/90 text-black"
+              disabled={loading}
             >
-              Cập nhật
+              {loading ? "Đang cập nhật..." : "Cập nhật"}
             </Button>
           </DialogFooter>
         </form>

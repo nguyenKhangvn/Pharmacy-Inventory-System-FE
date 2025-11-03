@@ -9,10 +9,21 @@ import {
 } from "@/components/ui/dialog";
 import { AlertTriangle } from "lucide-react";
 
-export function DeleteCategoryDialog({ category, open, onOpenChange }) {
-  const handleDelete = () => {
-    console.log("Deleting category:", category?.id);
-    onOpenChange(false);
+export function DeleteCategoryDialog({
+  category,
+  open,
+  onOpenChange,
+  onConfirm,
+  loading,
+}) {
+  const handleDelete = async () => {
+    try {
+      await onConfirm();
+      onOpenChange(false);
+    } catch (error) {
+      // Error đã được xử lý trong parent
+      console.error("Error in dialog:", error);
+    }
   };
 
   return (
@@ -37,6 +48,7 @@ export function DeleteCategoryDialog({ category, open, onOpenChange }) {
             type="button"
             variant="outline"
             onClick={() => onOpenChange(false)}
+            disabled={loading}
           >
             Hủy
           </Button>
@@ -44,8 +56,9 @@ export function DeleteCategoryDialog({ category, open, onOpenChange }) {
             type="button"
             className="bg-red-500 hover:bg-red-600 text-white"
             onClick={handleDelete}
+            disabled={loading}
           >
-            Xóa
+            {loading ? "Đang xóa..." : "Xóa"}
           </Button>
         </DialogFooter>
       </DialogContent>
