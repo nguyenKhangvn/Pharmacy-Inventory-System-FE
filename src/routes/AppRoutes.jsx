@@ -19,7 +19,6 @@ const AppRoutes = () => {
     <Routes>
       <Route path="/" element={<Navigate to="/categories" replace />} />
       <Route path="/login" element={<Login />} />
-      <Route path="/users" element={<UsersPage />} />
       <Route path="/categories" element={<CategoriesPage />} />
       <Route path="/suppliers" element={<SuppliersPage />} />
       <Route path="/inventory" element={<InventoryPage />} />

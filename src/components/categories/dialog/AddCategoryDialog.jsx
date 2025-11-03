@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,12 +15,20 @@ import {
 import { Label } from "@/components/ui/label";
 import { AlertCircle } from "lucide-react";
 
-export function AddCategoryDialog({ open, onOpenChange }) {
+export function AddCategoryDialog({ open, onOpenChange, onSubmit, loading }) {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
   });
   const [errors, setErrors] = useState({});
+
+  // Reset form khi đóng dialog
+  useEffect(() => {
+    if (!open) {
+      setFormData({ name: "", description: "" });
+      setErrors({});
+    }
+  }, [open]);
 
   const validateForm = () => {
     const newErrors = {};
@@ -37,12 +45,16 @@ export function AddCategoryDialog({ open, onOpenChange }) {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (validateForm()) {
-      console.log("Adding category:", formData);
-      setFormData({ name: "", description: "" });
+    if (!validateForm()) return;
+
+    try {
+      await onSubmit(formData);
       onOpenChange(false);
+    } catch (error) {
+      // Error đã được xử lý trong parent
+      console.error("Error in dialog:", error);
     }
   };
 
@@ -59,7 +71,7 @@ export function AddCategoryDialog({ open, onOpenChange }) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name" className="text-black font-medium">
-              Tên danh mục
+              Tên danh mục <span className="text-red-500">*</span>
             </Label>
             <Input
               id="name"
@@ -69,6 +81,7 @@ export function AddCategoryDialog({ open, onOpenChange }) {
                 setFormData({ ...formData, name: e.target.value })
               }
               className={errors.name ? "border-red-500" : ""}
+              disabled={loading}
             />
             {errors.name && (
               <div className="flex items-center gap-2 text-red-500 text-sm">
@@ -80,7 +93,7 @@ export function AddCategoryDialog({ open, onOpenChange }) {
 
           <div className="space-y-2">
             <Label htmlFor="description" className="text-black font-medium">
-              Mô tả
+              Mô tả <span className="text-red-500">*</span>
             </Label>
             <Textarea
               id="description"
@@ -91,6 +104,7 @@ export function AddCategoryDialog({ open, onOpenChange }) {
               }
               className={errors.description ? "border-red-500" : ""}
               rows={4}
+              disabled={loading}
             />
             {errors.description && (
               <div className="flex items-center gap-2 text-red-500 text-sm">
@@ -105,14 +119,16 @@ export function AddCategoryDialog({ open, onOpenChange }) {
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
+              disabled={loading}
             >
               Hủy
             </Button>
             <Button
               type="submit"
               className="bg-medical-blue hover:bg-medical-blue/90 text-black"
+              disabled={loading}
             >
-              Thêm danh mục
+              {loading ? "Đang thêm..." : "Thêm danh mục"}
             </Button>
           </DialogFooter>
         </form>
