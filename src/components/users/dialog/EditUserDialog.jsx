@@ -20,7 +20,13 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 
-export function EditUserDialog({ user, open, onOpenChange }) {
+export function EditUserDialog({
+  user,
+  open,
+  onOpenChange,
+  onSubmit,
+  loading,
+}) {
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -81,7 +87,7 @@ export function EditUserDialog({ user, open, onOpenChange }) {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     const newErrors = {};
@@ -101,9 +107,22 @@ export function EditUserDialog({ user, open, onOpenChange }) {
       return;
     }
 
-    // Submit form
-    console.log(" Form submitted:", formData);
-    onOpenChange(false);
+    try {
+      // Gọi API từ parent component
+      await onSubmit(user.id, {
+        fullName: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        role: formData.role,
+        status: formData.status,
+      });
+
+      // Đóng dialog nếu thành công
+      onOpenChange(false);
+    } catch (error) {
+      // Error đã được xử lý trong parent component
+      console.error("Error in dialog:", error);
+    }
   };
 
   return (
@@ -192,10 +211,8 @@ export function EditUserDialog({ user, open, onOpenChange }) {
                   <SelectValue placeholder="Chọn vai trò" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Quản trị viên">Quản trị viên</SelectItem>
-                  <SelectItem value="Dược sĩ">Dược sĩ</SelectItem>
-                  <SelectItem value="Kế toán">Kế toán</SelectItem>
-                  <SelectItem value="Thủ kho">Thủ kho</SelectItem>
+                  <SelectItem value="admin">Quản trị viên</SelectItem>
+                  <SelectItem value="user">Dược sĩ</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -224,14 +241,16 @@ export function EditUserDialog({ user, open, onOpenChange }) {
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
+              disabled={loading}
             >
               Hủy
             </Button>
             <Button
               type="submit"
               className="bg-medical-blue hover:bg-medical-blue/90"
+              disabled={loading}
             >
-              Lưu thay đổi
+              {loading ? "Đang cập nhật..." : "Lưu thay đổi"}
             </Button>
           </DialogFooter>
         </form>
