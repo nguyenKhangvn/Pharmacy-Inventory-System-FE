@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -15,70 +14,42 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Edit, Trash2, Lock, Unlock } from "lucide-react";
-import { EditUserDialog } from "./dialog/EditUserDialog";
-import { DeleteUserDialog } from "./dialog/DeleteUserDialog";
+import {
+  MoreVertical,
+  Edit,
+  Lock,
+  Unlock,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 
-const users = [
-  {
-    id: "1",
-    username: "admin",
-    fullName: "Nguyễn Văn A",
-    email: "admin@pharmacare.vn",
-    phone: "0901234567",
-    role: "Quản trị viên",
-    status: "active",
-    lastLogin: "10/01/2025 14:30",
-  },
-  {
-    id: "2",
-    username: "duocsi01",
-    fullName: "Trần Thị B",
-    email: "duocsi01@pharmacare.vn",
-    phone: "0912345678",
-    role: "Dược sĩ",
-    status: "active",
-    lastLogin: "10/01/2025 09:15",
-  },
-  {
-    id: "3",
-    username: "ketoan01",
-    fullName: "Lê Văn C",
-    email: "ketoan01@pharmacare.vn",
-    phone: "0923456789",
-    role: "Kế toán",
-    status: "active",
-    lastLogin: "09/01/2025 16:45",
-  },
-  {
-    id: "4",
-    username: "duocsi02",
-    fullName: "Phạm Thị D",
-    email: "duocsi02@pharmacare.vn",
-    phone: "0934567890",
-    role: "Dược sĩ",
-    status: "inactive",
-    lastLogin: "05/01/2025 11:20",
-  },
-];
-
-export function UsersTable() {
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-
-  const handleEdit = (user) => {
-    setSelectedUser(user);
-    setIsEditDialogOpen(true);
+export function UsersTable({
+  users = [],
+  loading,
+  onEdit,
+  onStatusChange,
+  pagination,
+  onPageChange,
+  onLimitChange,
+}) {
+  const formatDate = (dateString) => {
+    if (!dateString) return "Chưa đăng nhập";
+    const date = new Date(dateString);
+    return date.toLocaleString("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
-  const handleDelete = (user) => {
-    setSelectedUser(user);
-    setIsDeleteDialogOpen(true);
+  const getRoleLabel = (role) => {
+    return role === "admin" ? "Quản trị viên" : "Người dùng";
   };
 
   return (
-    <>
+    <div className="space-y-4">
       <div className="bg-card rounded-lg border border-border">
         <Table>
           <TableHeader>
@@ -94,82 +65,143 @@ export function UsersTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users.map((user) => (
-              <TableRow key={user.id}>
-                <TableCell className="font-medium">{user.username}</TableCell>
-                <TableCell>{user.fullName}</TableCell>
-                <TableCell className="text-muted-foreground">
-                  {user.email}
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {user.phone}
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline" className="font-normal">
-                    {user.role}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  {user.status === "active" ? (
-                    <Badge className="bg-calm-green/10 text-calm-green hover:bg-calm-green/20 border-calm-green/20">
-                      <Unlock className="w-3 h-3 mr-1" />
-                      Hoạt động
-                    </Badge>
-                  ) : (
-                    <Badge
-                      variant="secondary"
-                      className="text-muted-foreground"
-                    >
-                      <Lock className="w-3 h-3 mr-1" />
-                      Khóa
-                    </Badge>
-                  )}
-                </TableCell>
-                <TableCell className="text-muted-foreground text-sm">
-                  {user.lastLogin}
-                </TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreVertical className="w-4 h-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleEdit(user)}>
-                        <Edit className="w-4 h-4 mr-2" />
-                        Chỉnh sửa
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleDelete(user)}
-                        className="text-destructive focus:text-destructive"
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Xóa
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+            {loading ? (
+              <TableRow>
+                <TableCell
+                  colSpan={8}
+                  className="text-center py-8 text-muted-foreground"
+                >
+                  Đang tải...
                 </TableCell>
               </TableRow>
-            ))}
+            ) : users.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={8}
+                  className="text-center py-8 text-muted-foreground"
+                >
+                  Không có dữ liệu
+                </TableCell>
+              </TableRow>
+            ) : (
+              users.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell className="font-medium">{user.username}</TableCell>
+                  <TableCell>{user.fullName || "-"}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {user.email}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {user.phone || "-"}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="font-normal">
+                      {getRoleLabel(user.role)}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {user.status === "active" ? (
+                      <Badge className="bg-calm-green/10 text-calm-green hover:bg-calm-green/20 border-calm-green/20">
+                        <Unlock className="w-3 h-3 mr-1" />
+                        Hoạt động
+                      </Badge>
+                    ) : (
+                      <Badge
+                        variant="secondary"
+                        className="text-muted-foreground"
+                      >
+                        <Lock className="w-3 h-3 mr-1" />
+                        Khóa
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-sm">
+                    {formatDate(user.lastLogin)}
+                  </TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <MoreVertical className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => onEdit(user)}>
+                          <Edit className="w-4 h-4 mr-2" />
+                          Chỉnh sửa
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            const newStatus =
+                              user.status === "active" ? "locked" : "active";
+                            onStatusChange(user.id, newStatus);
+                          }}
+                        >
+                          {user.status === "active" ? (
+                            <>
+                              <Lock className="w-4 h-4 mr-2" />
+                              Khóa
+                            </>
+                          ) : (
+                            <>
+                              <Unlock className="w-4 h-4 mr-2" />
+                              Mở khóa
+                            </>
+                          )}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
 
-      {selectedUser && (
-        <>
-          <EditUserDialog
-            user={selectedUser}
-            open={isEditDialogOpen}
-            onOpenChange={setIsEditDialogOpen}
-          />
-          <DeleteUserDialog
-            user={selectedUser}
-            open={isDeleteDialogOpen}
-            onOpenChange={setIsDeleteDialogOpen}
-          />
-        </>
+      {pagination && pagination.pages > 0 && (
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Hiển thị:</span>
+            <select
+              value={pagination.limit}
+              onChange={(e) => onLimitChange(Number(e.target.value))}
+              className="px-3 py-1 border border-input rounded-md bg-background"
+            >
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+            <span className="text-sm text-muted-foreground">
+              Tổng: {pagination.total} người dùng
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange(pagination.page - 1)}
+              disabled={pagination.page === 1}
+            >
+              <ChevronLeft className="w-4 h-4" />
+              Trước
+            </Button>
+            <span className="text-sm">
+              Trang {pagination.page} / {pagination.pages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange(pagination.page + 1)}
+              disabled={pagination.page === pagination.pages}
+            >
+              Sau
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
       )}
-    </>
+    </div>
   );
 }

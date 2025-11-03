@@ -3,15 +3,27 @@ import { Bell, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { UserProfileModal } from "./users/UserProfileModal";
+import { useAuth } from "@/context/AuthContext";
 
 export function Header() {
+  const { user, logout } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
 
   const handleLogout = () => {
-    console.log("Logging out...");
-    // Add actual logout logic here
+    logout();
+  };
+
+  const getUserInitials = () => {
+    if (!user) return "U";
+    if (user.fullName) {
+      const names = user.fullName.split(" ");
+      return names.length > 1
+        ? names[0][0] + names[names.length - 1][0]
+        : names[0][0];
+    }
+    return user.username.substring(0, 2).toUpperCase();
   };
 
   const notifications = [
@@ -114,7 +126,9 @@ export function Header() {
               onClick={() => setIsProfileOpen(!isProfileOpen)}
               className="w-10 h-10 bg-medical-blue rounded-full flex items-center justify-center hover:bg-medical-blue/90 transition-colors cursor-pointer"
             >
-              <span className="text-sm font-medium text-white">DS</span>
+              <span className="text-sm font-medium text-white">
+                {getUserInitials()}
+              </span>
             </button>
 
             {isProfileOpen && (
@@ -122,13 +136,19 @@ export function Header() {
                 <div className="p-4 border-b border-border">
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 bg-medical-blue rounded-full flex items-center justify-center">
-                      <span className="text-sm font-medium text-white">DS</span>
+                      <span className="text-sm font-medium text-white">
+                        {getUserInitials()}
+                      </span>
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-foreground">
-                        Dược sĩ Nguyễn Văn A
+                        {user?.fullName || user?.username || "User"}
                       </p>
-                      <p className="text-xs text-muted-foreground">Khoa Dược</p>
+                      <p className="text-xs text-muted-foreground capitalize">
+                        {user?.role === "admin"
+                          ? "Quản trị viên"
+                          : "Người dùng"}
+                      </p>
                     </div>
                   </div>
                 </div>

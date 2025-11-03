@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,7 +20,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 
-export function AddUserDialog({ open, onOpenChange }) {
+export function AddUserDialog({ open, onOpenChange, onSubmit, loading }) {
   const [formData, setFormData] = useState({
     username: "",
     fullName: "",
@@ -30,6 +30,22 @@ export function AddUserDialog({ open, onOpenChange }) {
     confirmPassword: "",
     role: "",
   });
+
+  // useEffect(() => {
+  //   if (!open) {
+  //     setFormData({
+  //       username: "",
+  //       fullName: "",
+  //       email: "",
+  //       phone: "",
+  //       password: "",
+  //       confirmPassword: "",
+  //       role: "",
+  //     });
+  //     setErrors({});
+  //     setTouched({});
+  //   }
+  // }, [open]);
 
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
@@ -94,7 +110,7 @@ export function AddUserDialog({ open, onOpenChange }) {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     const newErrors = {};
@@ -114,20 +130,24 @@ export function AddUserDialog({ open, onOpenChange }) {
       return;
     }
 
-    console.log("Form submitted:", formData);
-    onOpenChange(false);
+    try {
+      // Gọi API từ parent component
+      await onSubmit({
+        username: formData.username,
+        fullName: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        password: formData.password,
+        confirmPassword: formData.confirmPassword,
+        role: formData.role,
+      });
 
-    setFormData({
-      username: "",
-      fullName: "",
-      email: "",
-      phone: "",
-      password: "",
-      confirmPassword: "",
-      role: "",
-    });
-    setErrors({});
-    setTouched({});
+      // Đóng dialog và reset form nếu thành công
+      onOpenChange(false);
+    } catch (error) {
+      // Error đã được xử lý trong parent component
+      console.error("Error in dialog:", error);
+    }
   };
 
   return (
@@ -308,9 +328,9 @@ export function AddUserDialog({ open, onOpenChange }) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="admin">Quản trị viên</SelectItem>
-                  <SelectItem value="pharmacist">Dược sĩ</SelectItem>
-                  <SelectItem value="accountant">Kế toán</SelectItem>
-                  <SelectItem value="warehouse">Thủ kho</SelectItem>
+                  {/* <SelectItem value="pharmacist">Dược sĩ</SelectItem>
+                  <SelectItem value="accountant">Kế toán</SelectItem> */}
+                  <SelectItem value="user">Dược sĩ</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -321,14 +341,16 @@ export function AddUserDialog({ open, onOpenChange }) {
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
+              disabled={loading}
             >
               Hủy
             </Button>
             <Button
               type="submit"
               className="bg-medical-blue hover:bg-medical-blue/90 text-white font-medium"
+              disabled={loading}
             >
-              Thêm người dùng
+              {loading ? "Đang thêm..." : "Thêm người dùng"}
             </Button>
           </DialogFooter>
         </form>
