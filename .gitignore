@@ -7,8 +7,10 @@ dist-ssr/
 .env
 .env.development
 .env.production
+
 *.local
 
+# IDE & system files
 .vscode/*
 !.vscode/extensions.json
 .idea
