@@ -1,8 +1,13 @@
-node_modules
-dist
-dist-ssr
+# Node modules và build output
+node_modules/
+dist/
+dist-ssr/
+
+# Environment files
+.env
 *.local
 
+# IDE & system files
 .vscode/*
 !.vscode/extensions.json
 .idea
