@@ -1,6 +1,12 @@
-node_modules
-dist
-dist-ssr
+# Node modules và build output
+node_modules/
+dist/
+dist-ssr/
+
+# Environment files
+.env
+.env.development
+.env.production
 *.local
 
 .vscode/*
