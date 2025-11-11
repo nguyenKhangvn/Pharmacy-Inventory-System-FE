@@ -5,6 +5,9 @@ dist-ssr/
 
 # Environment files
 .env
+.env.development
+.env.production
+
 *.local
 
 # IDE & system files
