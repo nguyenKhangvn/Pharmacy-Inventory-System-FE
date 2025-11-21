@@ -1,62 +1,65 @@
-import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { productService } from "@/services/productService";
 
-export function InventoryTable({ categoryId, supplierId }) {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 10,
-    total: 0,
-    pages: 0,
-  });
+const inventoryData = [
+  {
+    id: "MED001",
+    name: "Paracetamol 500mg",
+    category: "Giảm đau",
+    description: "Thuốc giảm đau, hạ sốt",
+    unit: "Viên",
+    supplier: "DHG Pharma",
+    expiryDate: "2025-12-15",
+  },
+  {
+    id: "MED002",
+    name: "Amoxicillin 250mg",
+    category: "Kháng sinh",
+    description: "Kháng sinh nhóm Penicillin",
+    unit: "Viên",
+    supplier: "Traphaco",
+    expiryDate: "2025-08-20",
+  },
+  {
+    id: "MED003",
+    name: "Vitamin C 1000mg",
+    category: "Vitamin",
+    description: "Bổ sung vitamin C",
+    unit: "Viên",
+    supplier: "Imexpharm",
+    expiryDate: "2024-03-10",
+  },
+  {
+    id: "MED004",
+    name: "Aspirin 100mg",
+    category: "Kháng đông máu",
+    description: "Thuốc chống đông máu",
+    unit: "Viên",
+    supplier: "Pymepharco",
+    expiryDate: "2025-06-30",
+  },
+  {
+    id: "MED005",
+    name: "Ibuprofen 400mg",
+    category: "Giảm đau",
+    description: "Thuốc giảm đau, kháng viêm",
+    unit: "Viên",
+    supplier: "DHG Pharma",
+    expiryDate: "2025-09-15",
+  },
+];
 
-  useEffect(() => {
-    loadProducts();
-  }, [pagination.page, categoryId, supplierId]);
-
-  const loadProducts = async () => {
-    try {
-      setLoading(true);
-      const params = {
-        page: pagination.page,
-        limit: pagination.limit,
-      };
-      if (categoryId && categoryId !== "all") params.categoryId = categoryId;
-      if (supplierId && supplierId !== "all") params.supplierId = supplierId;
-      const response = await productService.getProducts(params);
-      setProducts(response.data || []);
-      setPagination((prev) => ({
-        ...prev,
-        total: response.pagination.total,
-        pages: response.pagination.pages,
-      }));
-    } catch (err) {
-      console.error("Failed to load products:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handlePageChange = (newPage) => {
-    if (newPage >= 1 && newPage <= pagination.pages) {
-      setPagination({ ...pagination, page: newPage });
-    }
-  };
-
+export function InventoryTable() {
   return (
     <Card className="border-0 shadow-sm">
       <CardContent className="p-0">
-        {/* Bộ lọc */}
-        <div className="overflow-x-auto mt-2">
+        <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-muted/50">
               <tr>
                 <th className="text-left p-4 font-medium text-foreground">
-                  Mã SKU
+                  Mã thuốc
                 </th>
                 <th className="text-left p-4 font-medium text-foreground">
                   Tên thuốc
@@ -65,143 +68,94 @@ export function InventoryTable({ categoryId, supplierId }) {
                   Danh mục thuốc
                 </th>
                 <th className="text-left p-4 font-medium text-foreground">
+                  Mô tả
+                </th>
+                <th className="text-left p-4 font-medium text-foreground">
                   Đơn vị
                 </th>
                 <th className="text-left p-4 font-medium text-foreground">
-                  Tồn kho tối thiểu
+                  Nhà cung cấp
                 </th>
                 <th className="text-left p-4 font-medium text-foreground">
-                  Trạng thái
+                  Hạn sử dụng
                 </th>
               </tr>
             </thead>
             <tbody>
-              {loading ? (
-                <tr>
-                  <td
-                    colSpan="6"
-                    className="p-8 text-center text-muted-foreground"
-                  >
-                    Đang tải dữ liệu...
+              {inventoryData.map((item, index) => (
+                <tr
+                  key={item.id}
+                  className={`border-b border-border ${
+                    index % 2 === 0 ? "bg-background" : "bg-muted/20"
+                  }`}
+                >
+                  <td className="p-4">
+                    <span className="font-mono text-sm text-medical-blue font-medium">
+                      {item.id}
+                    </span>
+                  </td>
+                  <td className="p-4">
+                    <p className="font-medium text-foreground">{item.name}</p>
+                  </td>
+                  <td className="p-4 text-muted-foreground">{item.category}</td>
+                  <td className="p-4 text-muted-foreground">
+                    {item.description}
+                  </td>
+                  <td className="p-4 text-muted-foreground">{item.unit}</td>
+                  <td className="p-4 text-muted-foreground">{item.supplier}</td>
+                  <td className="p-4 text-muted-foreground">
+                    {item.expiryDate}
                   </td>
                 </tr>
-              ) : products.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan="6"
-                    className="p-8 text-center text-muted-foreground"
-                  >
-                    Không có sản phẩm nào
-                  </td>
-                </tr>
-              ) : (
-                products.map((item, index) => (
-                  <tr
-                    key={item._id}
-                    className={`border-b border-border ${
-                      index % 2 === 0 ? "bg-background" : "bg-muted/20"
-                    }`}
-                  >
-                    <td className="p-4">
-                      <span className="font-mono text-sm text-medical-blue font-medium">
-                        {item.sku}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <p className="font-medium text-foreground">{item.name}</p>
-                    </td>
-                    <td className="p-4 text-muted-foreground">
-                      {item.category?.name || "Chưa phân loại"}
-                    </td>
-                    <td className="p-4 text-muted-foreground">{item.unit}</td>
-                    <td className="p-4 text-muted-foreground">
-                      {item.minimumStock || 0}
-                    </td>
-                    <td className="p-4">
-                      <span
-                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                          item.isActive
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
-                      >
-                        {item.isActive ? "Hoạt động" : "Ngưng hoạt động"}
-                      </span>
-                    </td>
-                  </tr>
-                ))
-              )}
+              ))}
             </tbody>
           </table>
         </div>
 
         <div className="flex items-center justify-between p-4 border-t border-border">
           <div className="text-sm text-muted-foreground">
-            Hiển thị{" "}
-            <span className="font-medium text-foreground">
-              {(pagination.page - 1) * pagination.limit + 1}-
-              {Math.min(pagination.page * pagination.limit, pagination.total)}
-            </span>{" "}
+            Hiển thị <span className="font-medium text-foreground">1-5</span>{" "}
             trong tổng số{" "}
-            <span className="font-medium text-foreground">
-              {pagination.total}
-            </span>{" "}
-            sản phẩm
+            <span className="font-medium text-foreground">2,847</span> thuốc
           </div>
 
           <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 bg-transparent"
-              onClick={() => handlePageChange(pagination.page - 1)}
-              disabled={pagination.page === 1}
-            >
+            <Button variant="outline" size="sm" className="h-8 bg-transparent">
               <ChevronLeft className="w-4 h-4" />
               Trước
             </Button>
             <div className="flex items-center space-x-1">
-              {[...Array(Math.min(5, pagination.pages))].map((_, i) => {
-                const pageNum = i + 1;
-                return (
-                  <Button
-                    key={pageNum}
-                    variant={
-                      pagination.page === pageNum ? "default" : "outline"
-                    }
-                    size="sm"
-                    className={`h-8 w-8 ${
-                      pagination.page === pageNum
-                        ? "bg-medical-blue hover:bg-medical-blue/90"
-                        : "bg-transparent"
-                    }`}
-                    onClick={() => handlePageChange(pageNum)}
-                  >
-                    {pageNum}
-                  </Button>
-                );
-              })}
-              {pagination.pages > 5 && (
-                <>
-                  <span className="text-muted-foreground">...</span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 w-8 bg-transparent"
-                    onClick={() => handlePageChange(pagination.pages)}
-                  >
-                    {pagination.pages}
-                  </Button>
-                </>
-              )}
+              <Button
+                variant="default"
+                size="sm"
+                className="h-8 w-8 bg-medical-blue hover:bg-medical-blue/90"
+              >
+                1
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 w-8 bg-transparent"
+              >
+                2
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 w-8 bg-transparent"
+              >
+                3
+              </Button>
+              <span className="text-muted-foreground">...</span>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 w-8 bg-transparent"
+              >
+                570
+              </Button>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 bg-transparent"
-              onClick={() => handlePageChange(pagination.page + 1)}
-              disabled={pagination.page === pagination.pages}
-            >
+            <Button variant="outline" size="sm" className="h-8 bg-transparent">
               Sau
               <ChevronRight className="w-4 h-4" />
             </Button>

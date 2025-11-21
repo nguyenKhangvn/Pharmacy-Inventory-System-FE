@@ -7,43 +7,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Filter } from "lucide-react";
-import { useEffect, useState } from "react";
-import { categoryService } from "@/services/categoryService";
-import { supplierService } from "@/services/supplierService";
 
-export function InventoryFilters({
-  categoryId,
-  setCategoryId,
-  supplierId,
-  setSupplierId,
-}) {
-  const [categories, setCategories] = useState([]);
-  const [suppliers, setSuppliers] = useState([]);
-
-  useEffect(() => {
-    loadCategories();
-    loadSuppliers();
-  }, []);
-
-  const loadCategories = async () => {
-    try {
-      const res = await categoryService.getCategories({ status: "active" });
-      setCategories(res.data || []);
-    } catch (err) {
-      console.error("Failed to load categories:", err);
-      setCategories([]);
-    }
-  };
-
-  const loadSuppliers = async () => {
-    try {
-      const res = await supplierService.getSuppliers({ status: "active" });
-      setSuppliers(res.data || []);
-    } catch (err) {
-      console.error("Failed to load suppliers:", err);
-      setSuppliers([]);
-    }
-  };
+export function InventoryFilters() {
   return (
     <div className="bg-card rounded-lg border border-border p-6 space-y-4">
       <div className="flex items-center justify-between">
@@ -55,10 +20,6 @@ export function InventoryFilters({
           variant="ghost"
           size="sm"
           className="text-muted-foreground hover:text-foreground"
-          onClick={() => {
-            setCategoryId("all");
-            setSupplierId("all");
-          }}
         >
           Xóa tất cả
         </Button>
@@ -69,17 +30,15 @@ export function InventoryFilters({
           <label className="text-sm font-medium text-foreground">
             Danh mục thuốc
           </label>
-          <Select value={categoryId} onValueChange={setCategoryId}>
+          <Select>
             <SelectTrigger className="bg-background border-border">
               <SelectValue placeholder="Chọn danh mục" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tất cả</SelectItem>
-              {categories.map((cat) => (
-                <SelectItem key={cat._id} value={cat._id}>
-                  {cat.name}
-                </SelectItem>
-              ))}
+              <SelectItem value="giam-dau">Giảm đau</SelectItem>
+              <SelectItem value="khang-sinh">Kháng sinh</SelectItem>
+              <SelectItem value="vitamin">Vitamin</SelectItem>
+              <SelectItem value="khong-chong-dong">Kháng đông máu</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -88,17 +47,15 @@ export function InventoryFilters({
           <label className="text-sm font-medium text-foreground">
             Nhà cung cấp
           </label>
-          <Select value={supplierId} onValueChange={setSupplierId}>
+          <Select>
             <SelectTrigger className="bg-background border-border">
               <SelectValue placeholder="Chọn nhà cung cấp" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tất cả</SelectItem>
-              {suppliers.map((sup) => (
-                <SelectItem key={sup.id || sup._id} value={sup.id || sup._id}>
-                  {sup.name}
-                </SelectItem>
-              ))}
+              <SelectItem value="dhg">DHG Pharma</SelectItem>
+              <SelectItem value="traphaco">Traphaco</SelectItem>
+              <SelectItem value="imexpharm">Imexpharm</SelectItem>
+              <SelectItem value="pymepharco">Pymepharco</SelectItem>
             </SelectContent>
           </Select>
         </div>
