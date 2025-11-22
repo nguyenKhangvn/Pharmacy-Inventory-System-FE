@@ -3,20 +3,31 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { productService } from "@/services/productService";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-export function InventoryTable({ categoryId, supplierId }) {
+export function InventoryTable({ categoryId, supplierId, search }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({
     page: 1,
-    limit: 10,
+    limit: 25,
     total: 0,
     pages: 0,
   });
 
   useEffect(() => {
     loadProducts();
-  }, [pagination.page, categoryId, supplierId]);
+  }, [pagination.page, pagination.limit, categoryId, supplierId, search]);
+
+  useEffect(() => {
+    setPagination(prev => ({ ...prev, page: 1 }));
+  }, [categoryId, supplierId, search]);
 
   const loadProducts = async () => {
     try {
@@ -27,6 +38,7 @@ export function InventoryTable({ categoryId, supplierId }) {
       };
       if (categoryId && categoryId !== "all") params.categoryId = categoryId;
       if (supplierId && supplierId !== "all") params.supplierId = supplierId;
+      if (search) params.search = search;
       const response = await productService.getProducts(params);
       setProducts(response.data || []);
       setPagination((prev) => ({
@@ -55,31 +67,20 @@ export function InventoryTable({ categoryId, supplierId }) {
           <table className="w-full">
             <thead className="bg-muted/50">
               <tr>
-                <th className="text-left p-4 font-medium text-foreground">
-                  Mã SKU
-                </th>
-                <th className="text-left p-4 font-medium text-foreground">
-                  Tên thuốc
-                </th>
-                <th className="text-left p-4 font-medium text-foreground">
-                  Danh mục thuốc
-                </th>
-                <th className="text-left p-4 font-medium text-foreground">
-                  Đơn vị
-                </th>
-                <th className="text-left p-4 font-medium text-foreground">
-                  Tồn kho tối thiểu
-                </th>
-                <th className="text-left p-4 font-medium text-foreground">
-                  Trạng thái
-                </th>
+                <th className="text-left p-4 font-medium text-foreground">Mã thuốc</th>
+                <th className="text-left p-4 font-medium text-foreground">Tên thuốc</th>
+                <th className="text-left p-4 font-medium text-foreground">Danh mục thuốc</th>
+                <th className="text-left p-4 font-medium text-foreground">Mô tả</th>
+                <th className="text-left p-4 font-medium text-foreground">Đơn vị</th>
+                <th className="text-left p-4 font-medium text-foreground">Nhà cung cấp</th>
+                <th className="text-left p-4 font-medium text-foreground">Hạn sử dụng</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
                   <td
-                    colSpan="6"
+                    colSpan="7"
                     className="p-8 text-center text-muted-foreground"
                   >
                     Đang tải dữ liệu...
@@ -88,7 +89,7 @@ export function InventoryTable({ categoryId, supplierId }) {
               ) : products.length === 0 ? (
                 <tr>
                   <td
-                    colSpan="6"
+                    colSpan="7"
                     className="p-8 text-center text-muted-foreground"
                   >
                     Không có sản phẩm nào
@@ -113,20 +114,17 @@ export function InventoryTable({ categoryId, supplierId }) {
                     <td className="p-4 text-muted-foreground">
                       {item.category?.name || "Chưa phân loại"}
                     </td>
+                    <td className="p-4 text-muted-foreground">
+                      {item.description || "-"}
+                    </td>
                     <td className="p-4 text-muted-foreground">{item.unit}</td>
                     <td className="p-4 text-muted-foreground">
-                      {item.minimumStock || 0}
+                      {item.supplier?.name || "-"}
                     </td>
-                    <td className="p-4">
-                      <span
-                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                          item.isActive
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
-                      >
-                        {item.isActive ? "Hoạt động" : "Ngưng hoạt động"}
-                      </span>
+                    <td className="p-4 text-muted-foreground">
+                      {item.expiryDate
+                        ? new Date(item.expiryDate).toLocaleDateString("vi-VN")
+                        : "-"}
                     </td>
                   </tr>
                 ))
@@ -136,17 +134,37 @@ export function InventoryTable({ categoryId, supplierId }) {
         </div>
 
         <div className="flex items-center justify-between p-4 border-t border-border">
-          <div className="text-sm text-muted-foreground">
-            Hiển thị{" "}
-            <span className="font-medium text-foreground">
-              {(pagination.page - 1) * pagination.limit + 1}-
-              {Math.min(pagination.page * pagination.limit, pagination.total)}
-            </span>{" "}
-            trong tổng số{" "}
-            <span className="font-medium text-foreground">
-              {pagination.total}
-            </span>{" "}
-            sản phẩm
+          <div className="flex items-center gap-4">
+            <div className="text-sm text-muted-foreground">
+              Hiển thị{" "}
+              <span className="font-medium text-foreground">
+                {(pagination.page - 1) * pagination.limit + 1}-
+                {Math.min(pagination.page * pagination.limit, pagination.total)}
+              </span>{" "}
+              trong tổng số{" "}
+              <span className="font-medium text-foreground">
+                {pagination.total}
+              </span>{" "}
+              sản phẩm
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Số dòng/trang:</span>
+              <Select
+                value={pagination.limit.toString()}
+                onValueChange={(value) =>
+                  setPagination({ ...pagination, limit: parseInt(value), page: 1 })
+                }
+              >
+                <SelectTrigger className="h-8 w-20 bg-background">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="flex items-center space-x-2">
