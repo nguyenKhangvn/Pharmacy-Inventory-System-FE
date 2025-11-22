@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,90 +9,10 @@ import {
   ArrowDownToLine,
   ArrowUpFromLine,
 } from "lucide-react";
-
-const historyData = [
-  {
-    id: "PN-2024-001",
-    type: "import",
-    date: "2024-01-15 09:30",
-    drugName: "Paracetamol 500mg",
-    drugCode: "MED001",
-    quantity: 500,
-    unit: "Viên",
-    supplier: "DHG Pharma",
-    department: null,
-    createdBy: "Nguyễn Văn A",
-    totalValue: "5,000,000 ₫",
-  },
-  {
-    id: "PX-2024-045",
-    type: "export",
-    date: "2024-01-15 14:20",
-    drugName: "Amoxicillin 250mg",
-    drugCode: "MED002",
-    quantity: 100,
-    unit: "Viên",
-    supplier: null,
-    department: "Khoa Nội",
-    createdBy: "Trần Thị B",
-    totalValue: "1,200,000 ₫",
-  },
-  {
-    id: "PN-2024-002",
-    type: "import",
-    date: "2024-01-14 10:15",
-    drugName: "Vitamin C 1000mg",
-    drugCode: "MED003",
-    quantity: 1000,
-    unit: "Viên",
-    supplier: "Imexpharm",
-    department: null,
-    createdBy: "Nguyễn Văn A",
-    totalValue: "8,500,000 ₫",
-  },
-  {
-    id: "PX-2024-044",
-    type: "export",
-    date: "2024-01-14 16:45",
-    drugName: "Aspirin 100mg",
-    drugCode: "MED004",
-    quantity: 50,
-    unit: "Viên",
-    supplier: null,
-    department: "Khoa Ngoại",
-    createdBy: "Lê Văn C",
-    totalValue: "450,000 ₫",
-  },
-  {
-    id: "PN-2024-003",
-    type: "import",
-    date: "2024-01-13 11:00",
-    drugName: "Ibuprofen 400mg",
-    drugCode: "MED005",
-    quantity: 300,
-    unit: "Viên",
-    supplier: "DHG Pharma",
-    department: null,
-    createdBy: "Nguyễn Văn A",
-    totalValue: "3,600,000 ₫",
-  },
-  {
-    id: "PX-2024-043",
-    type: "export",
-    date: "2024-01-13 15:30",
-    drugName: "Paracetamol 500mg",
-    drugCode: "MED001",
-    quantity: 200,
-    unit: "Viên",
-    supplier: null,
-    department: "Khoa Sản",
-    createdBy: "Trần Thị B",
-    totalValue: "2,000,000 ₫",
-  },
-];
+import { transactionService } from "@/services/transactionService";
 
 function getTypeBadge(type) {
-  if (type === "import") {
+  if (type === "INBOUND") {
     return (
       <Badge className="bg-calm-green-light text-calm-green border-0">
         <ArrowDownToLine className="w-3 h-3 mr-1" />
@@ -107,7 +28,64 @@ function getTypeBadge(type) {
   );
 }
 
-export function HistoryTable() {
+export function HistoryTable({ filters }) {
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 1,
+  });
+
+  useEffect(() => {
+    loadTransactions();
+  }, [pagination.page, filters]);
+
+  const loadTransactions = async () => {
+    try {
+      setLoading(true);
+      const params = {
+        page: pagination.page,
+        limit: pagination.limit,
+        ...filters,
+      };
+
+      const response = await transactionService.getTransactions(params);
+
+      if (response.success) {
+        setTransactions(response.data.transactions || []);
+        setPagination((prev) => ({
+          ...prev,
+          total: response.data.pagination.total,
+          totalPages: response.data.pagination.totalPages,
+        }));
+      }
+    } catch (err) {
+      console.error("Failed to load transactions:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= pagination.totalPages) {
+      setPagination({ ...pagination, page: newPage });
+    }
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("vi-VN");
+  };
+
+  const formatTime = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString("vi-VN", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
   return (
     <Card className="border-0 shadow-sm">
       <CardContent className="p-0">
@@ -125,19 +103,16 @@ export function HistoryTable() {
                   Thời gian
                 </th>
                 <th className="text-left p-4 font-medium text-foreground">
-                  Thuốc
+                  Kho
                 </th>
                 <th className="text-left p-4 font-medium text-foreground">
-                  Số lượng
-                </th>
-                <th className="text-left p-4 font-medium text-foreground">
-                  NCC/Khoa
+                  Khoa/Phòng
                 </th>
                 <th className="text-left p-4 font-medium text-foreground">
                   Người tạo
                 </th>
                 <th className="text-left p-4 font-medium text-foreground">
-                  Giá trị
+                  Trạng thái
                 </th>
                 <th className="text-left p-4 font-medium text-foreground">
                   Hành động
@@ -145,110 +120,153 @@ export function HistoryTable() {
               </tr>
             </thead>
             <tbody>
-              {historyData.map((item, index) => (
-                <tr
-                  key={item.id}
-                  className={`border-b border-border ${
-                    index % 2 === 0 ? "bg-background" : "bg-muted/20"
-                  }`}
-                >
-                  <td className="p-4">
-                    <span className="font-mono text-sm text-medical-blue font-medium">
-                      {item.id}
-                    </span>
-                  </td>
-                  <td className="p-4">{getTypeBadge(item.type)}</td>
-                  <td className="p-4">
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium text-foreground">
-                        {item.date.split(" ")[0]}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {item.date.split(" ")[1]}
-                      </p>
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <div className="space-y-1">
-                      <p className="font-medium text-foreground">
-                        {item.drugName}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {item.drugCode}
-                      </p>
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <span className="font-medium text-foreground">
-                      {item.quantity.toLocaleString()} {item.unit}
-                    </span>
-                  </td>
-                  <td className="p-4 text-muted-foreground">
-                    {item.type === "import" ? item.supplier : item.department}
-                  </td>
-                  <td className="p-4 text-muted-foreground">
-                    {item.createdBy}
-                  </td>
-                  <td className="p-4">
-                    <span className="font-medium text-foreground">
-                      {item.totalValue}
-                    </span>
-                  </td>
-                  <td className="p-4">
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                      <Eye className="w-4 h-4" />
-                    </Button>
+              {loading ? (
+                <tr>
+                  <td
+                    colSpan="8"
+                    className="p-8 text-center text-muted-foreground"
+                  >
+                    Đang tải dữ liệu...
                   </td>
                 </tr>
-              ))}
+              ) : transactions.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan="8"
+                    className="p-8 text-center text-muted-foreground"
+                  >
+                    Không có giao dịch nào
+                  </td>
+                </tr>
+              ) : (
+                transactions.map((item, index) => (
+                  <tr
+                    key={item._id}
+                    className={`border-b border-border ${
+                      index % 2 === 0 ? "bg-background" : "bg-muted/20"
+                    }`}
+                  >
+                    <td className="p-4">
+                      <span className="font-mono text-sm text-medical-blue font-medium">
+                        {item.referenceCode}
+                      </span>
+                    </td>
+                    <td className="p-4">{getTypeBadge(item.type)}</td>
+                    <td className="p-4">
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium text-foreground">
+                          {formatDate(item.transactionDate)}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatTime(item.createdAt)}
+                        </p>
+                      </div>
+                    </td>
+                    <td className="p-4 text-muted-foreground">
+                      {item.sourceWarehouseId?.name || "-"}
+                    </td>
+                    <td className="p-4 text-muted-foreground">
+                      {item.departmentId?.name || "-"}
+                    </td>
+                    <td className="p-4 text-muted-foreground">
+                      {item.userId?.fullName || "-"}
+                    </td>
+                    <td className="p-4">
+                      <Badge
+                        className={`${
+                          item.status === "COMPLETED"
+                            ? "bg-green-100 text-green-800"
+                            : item.status === "PENDING"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-red-100 text-red-800"
+                        } border-0`}
+                      >
+                        {item.status === "COMPLETED"
+                          ? "Hoàn thành"
+                          : item.status === "PENDING"
+                          ? "Chờ xử lý"
+                          : "Đã hủy"}
+                      </Badge>
+                    </td>
+                    <td className="p-4">
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
 
         <div className="flex items-center justify-between p-4 border-t border-border">
           <div className="text-sm text-muted-foreground">
-            Hiển thị <span className="font-medium text-foreground">1-6</span>{" "}
+            Hiển thị{" "}
+            <span className="font-medium text-foreground">
+              {(pagination.page - 1) * pagination.limit + 1}-
+              {Math.min(pagination.page * pagination.limit, pagination.total)}
+            </span>{" "}
             trong tổng số{" "}
-            <span className="font-medium text-foreground">1,247</span> giao dịch
+            <span className="font-medium text-foreground">
+              {pagination.total}
+            </span>{" "}
+            giao dịch
           </div>
 
           <div className="flex items-center space-x-2">
-            <Button variant="outline" size="sm" className="h-8 bg-transparent">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 bg-transparent"
+              onClick={() => handlePageChange(pagination.page - 1)}
+              disabled={pagination.page === 1}
+            >
               <ChevronLeft className="w-4 h-4" />
               Trước
             </Button>
             <div className="flex items-center space-x-1">
-              <Button
-                variant="default"
-                size="sm"
-                className="h-8 w-8 bg-medical-blue hover:bg-medical-blue/90"
-              >
-                1
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 w-8 bg-transparent"
-              >
-                2
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 w-8 bg-transparent"
-              >
-                3
-              </Button>
-              <span className="text-muted-foreground">...</span>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 w-8 bg-transparent"
-              >
-                208
-              </Button>
+              {[...Array(Math.min(5, pagination.totalPages))].map((_, i) => {
+                const pageNum = i + 1;
+                return (
+                  <Button
+                    key={pageNum}
+                    variant={
+                      pagination.page === pageNum ? "default" : "outline"
+                    }
+                    size="sm"
+                    className={`h-8 w-8 ${
+                      pagination.page === pageNum
+                        ? "bg-medical-blue hover:bg-medical-blue/90"
+                        : "bg-transparent"
+                    }`}
+                    onClick={() => handlePageChange(pageNum)}
+                  >
+                    {pageNum}
+                  </Button>
+                );
+              })}
+              {pagination.totalPages > 5 && (
+                <>
+                  <span className="text-muted-foreground">...</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 w-8 bg-transparent"
+                    onClick={() => handlePageChange(pagination.totalPages)}
+                  >
+                    {pagination.totalPages}
+                  </Button>
+                </>
+              )}
             </div>
-            <Button variant="outline" size="sm" className="h-8 bg-transparent">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 bg-transparent"
+              onClick={() => handlePageChange(pagination.page + 1)}
+              disabled={pagination.page === pagination.totalPages}
+            >
               Sau
               <ChevronRight className="w-4 h-4" />
             </Button>
