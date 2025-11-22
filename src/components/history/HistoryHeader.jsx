@@ -10,7 +10,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export function HistoryHeader() {
+export function HistoryHeader({ onFilterChange }) {
+  const handleSearchChange = (e) => {
+    onFilterChange({ search: e.target.value });
+  };
+
+  const handleTypeChange = (value) => {
+    onFilterChange({ type: value === "all" ? "OUTBOUND" : value });
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -29,20 +37,21 @@ export function HistoryHeader() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Tìm theo mã phiếu, tên thuốc..."
+                placeholder="Tìm theo mã phiếu..."
                 className="pl-10 bg-background"
+                onChange={handleSearchChange}
               />
             </div>
 
             {/* Transaction Type Filter */}
-            <Select defaultValue="all">
+            <Select defaultValue="all" onValueChange={handleTypeChange}>
               <SelectTrigger className="bg-background">
                 <SelectValue placeholder="Loại giao dịch" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tất cả giao dịch</SelectItem>
-                <SelectItem value="import">Nhập kho</SelectItem>
-                <SelectItem value="export">Xuất kho</SelectItem>
+                <SelectItem value="INBOUND">Nhập kho</SelectItem>
+                <SelectItem value="OUTBOUND">Xuất kho</SelectItem>
               </SelectContent>
             </Select>
 
