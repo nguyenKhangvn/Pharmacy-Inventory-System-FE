@@ -52,9 +52,6 @@ export function CategoriesTable({
                   Số loại thuốc
                 </th>
                 <th className="text-left p-4 font-medium text-foreground">
-                  Ngày tạo
-                </th>
-                <th className="text-left p-4 font-medium text-foreground">
                   Hành động
                 </th>
               </tr>
@@ -91,10 +88,7 @@ export function CategoriesTable({
                       {category.description}
                     </td>
                     <td className="p-4 text-muted-foreground">
-                      {category.drugCount || 0}
-                    </td>
-                    <td className="p-4 text-muted-foreground">
-                      {formatDate(category.createdAt)}
+                      {category.productCount || 0}
                     </td>
                     <td className="p-4">
                       <DropdownMenu>
