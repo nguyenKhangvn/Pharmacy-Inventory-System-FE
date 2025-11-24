@@ -75,7 +75,9 @@ export function ExportReceiptForm() {
     {
       id: "1",
       productId: "",
+      sku: "",
       drugName: "",
+      unit: "",
       quantity: "",
       unitPrice: "",
       batchNumber: "",
@@ -89,7 +91,9 @@ export function ExportReceiptForm() {
     const newItem = {
       id: Date.now().toString(),
       productId: "",
+      sku: "",
       drugName: "",
+      unit: "",
       quantity: "",
       unitPrice: "",
       batchNumber: "",
@@ -143,10 +147,12 @@ export function ExportReceiptForm() {
           return {
             ...item,
             productId: product.id,
+            sku: product.sku || product.code,
             drugName: product.name,
+            unit: product.unit,
             unitPrice: product.unitPrice.toString(),
             availableStock: product.availableQty,
-            batchNumber: "", // Will be auto-allocated by FEFO
+            batchNumber: product.lotNumber || "", // Will be auto-allocated by FEFO
             expiryDate: product.nearestExpiry || "",
           };
         }
@@ -280,7 +286,9 @@ export function ExportReceiptForm() {
       {
         id: "1",
         productId: "",
+        sku: "",
         drugName: "",
+        unit: "",
         quantity: "",
         unitPrice: "",
         batchNumber: "",
@@ -421,8 +429,14 @@ export function ExportReceiptForm() {
             <table className="w-full">
               <thead className="bg-muted/50">
                 <tr>
+                  <th className="text-left p-3 font-medium text-foreground min-w-[150px]">
+                    Mã SKU
+                  </th>
                   <th className="text-left p-3 font-medium text-foreground min-w-[200px]">
                     Tên thuốc *
+                  </th>
+                  <th className="text-left p-3 font-medium text-foreground min-w-[80px]">
+                    Đơn vị
                   </th>
                   <th className="text-left p-3 font-medium text-foreground min-w-[100px]">
                     Số lượng *
@@ -430,7 +444,7 @@ export function ExportReceiptForm() {
                   <th className="text-left p-3 font-medium text-foreground min-w-[120px]">
                     Đơn giá
                   </th>
-                  <th className="text-left p-3 font-medium text-foreground min-w-[100px]">
+                  <th className="text-left p-3 font-medium text-foreground min-w-[120px]">
                     Số lô
                   </th>
                   <th className="text-left p-3 font-medium text-foreground min-w-[120px]">
@@ -456,6 +470,11 @@ export function ExportReceiptForm() {
                         index % 2 === 0 ? "bg-background" : "bg-muted/20"
                       } ${isOverStock ? "bg-red-50" : ""}`}
                     >
+                      <td className="p-3">
+                        <div className="text-sm text-muted-foreground font-mono">
+                          {item.sku || "-"}
+                        </div>
+                      </td>
                       <td className="p-3">
                         <div className="relative">
                           <Input
@@ -496,9 +515,9 @@ export function ExportReceiptForm() {
                                       {product.name}
                                     </div>
                                     <div className="text-xs text-muted-foreground mt-1">
-                                      Mã: {product.code} | Tồn kho:{" "}
-                                      {product.availableQty} {product.unit} |
-                                      Giá:{" "}
+                                      Mã: {product.code || product.sku} | Tồn
+                                      kho: {product.availableQty} {product.unit}{" "}
+                                      | Giá:{" "}
                                       {product.unitPrice.toLocaleString(
                                         "vi-VN"
                                       )}
@@ -511,11 +530,21 @@ export function ExportReceiptForm() {
                                           ).toLocaleDateString("vi-VN")}
                                         </span>
                                       )}
+                                      {product.lotNumber && (
+                                        <span className="ml-2">
+                                          | Lô: {product.lotNumber}
+                                        </span>
+                                      )}
                                     </div>
                                   </div>
                                 ))}
                               </div>
                             )}
+                        </div>
+                      </td>
+                      <td className="p-3">
+                        <div className="text-sm text-muted-foreground">
+                          {item.unit || "-"}
                         </div>
                       </td>
                       <td className="p-3">
