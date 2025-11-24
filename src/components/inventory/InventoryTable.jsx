@@ -26,7 +26,7 @@ export function InventoryTable({ categoryId, supplierId, search }) {
   }, [pagination.page, pagination.limit, categoryId, supplierId, search]);
 
   useEffect(() => {
-    setPagination(prev => ({ ...prev, page: 1 }));
+    setPagination((prev) => ({ ...prev, page: 1 }));
   }, [categoryId, supplierId, search]);
 
   const loadProducts = async () => {
@@ -67,13 +67,27 @@ export function InventoryTable({ categoryId, supplierId, search }) {
           <table className="w-full">
             <thead className="bg-muted/50">
               <tr>
-                <th className="text-left p-4 font-medium text-foreground">Mã thuốc</th>
-                <th className="text-left p-4 font-medium text-foreground">Tên thuốc</th>
-                <th className="text-left p-4 font-medium text-foreground">Danh mục thuốc</th>
-                <th className="text-left p-4 font-medium text-foreground">Mô tả</th>
-                <th className="text-left p-4 font-medium text-foreground">Đơn vị</th>
-                <th className="text-left p-4 font-medium text-foreground">Nhà cung cấp</th>
-                <th className="text-left p-4 font-medium text-foreground">Hạn sử dụng</th>
+                <th className="text-left p-4 font-medium text-foreground">
+                  Mã thuốc
+                </th>
+                <th className="text-left p-4 font-medium text-foreground">
+                  Tên thuốc
+                </th>
+                <th className="text-left p-4 font-medium text-foreground">
+                  Danh mục thuốc
+                </th>
+                <th className="text-left p-4 font-medium text-foreground">
+                  Mô tả
+                </th>
+                <th className="text-left p-4 font-medium text-foreground">
+                  Đơn vị
+                </th>
+                <th className="text-left p-4 font-medium text-foreground">
+                  Nhà cung cấp
+                </th>
+                <th className="text-left p-4 font-medium text-foreground">
+                  Hạn sử dụng
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -119,7 +133,9 @@ export function InventoryTable({ categoryId, supplierId, search }) {
                     </td>
                     <td className="p-4 text-muted-foreground">{item.unit}</td>
                     <td className="p-4 text-muted-foreground">
-                      {item.supplier?.name || "-"}
+                      {item.suppliers && item.suppliers.length > 0
+                        ? item.suppliers.map(s => s.name).join(", ")
+                        : "-"}
                     </td>
                     <td className="p-4 text-muted-foreground">
                       {item.expiryDate
@@ -148,11 +164,17 @@ export function InventoryTable({ categoryId, supplierId, search }) {
               sản phẩm
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Số dòng/trang:</span>
+              <span className="text-sm text-muted-foreground">
+                Số dòng/trang:
+              </span>
               <Select
                 value={pagination.limit.toString()}
                 onValueChange={(value) =>
-                  setPagination({ ...pagination, limit: parseInt(value), page: 1 })
+                  setPagination({
+                    ...pagination,
+                    limit: parseInt(value),
+                    page: 1,
+                  })
                 }
               >
                 <SelectTrigger className="h-8 w-20 bg-background">

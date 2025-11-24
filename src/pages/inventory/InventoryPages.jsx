@@ -23,8 +23,8 @@ export default function InventoryPage() {
             supplierId={supplierId}
             setSupplierId={setSupplierId}
           />
-          <InventoryTable 
-            categoryId={categoryId} 
+          <InventoryTable
+            categoryId={categoryId}
             supplierId={supplierId}
             search={search}
           />
