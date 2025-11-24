@@ -32,7 +32,7 @@ export function HistoryHeader({ onFilterChange }) {
 
       <Card className="border-0 shadow-sm">
         <CardContent className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Search */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -69,19 +69,6 @@ export function HistoryHeader({ onFilterChange }) {
               </SelectContent>
             </Select>
 
-            {/* Export Button */}
-            <Button className="bg-medical-blue hover:bg-medical-blue/90">
-              <Download className="w-4 h-4 mr-2" />
-              Xuất báo cáo
-            </Button>
-          </div>
-
-          {/* Advanced Filters */}
-          <div className="mt-4 pt-4 border-t border-border">
-            <Button variant="ghost" size="sm" className="text-medical-blue">
-              <Filter className="w-4 h-4 mr-2" />
-              Bộ lọc nâng cao
-            </Button>
           </div>
         </CardContent>
       </Card>
