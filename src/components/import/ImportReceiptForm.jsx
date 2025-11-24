@@ -45,6 +45,7 @@ export function ImportReceiptForm() {
       unitPrice: "",
       lotNumber: "",
       expiryDate: "",
+      description: "",
       total: 0,
     },
   ]);
@@ -91,6 +92,7 @@ export function ImportReceiptForm() {
       unitPrice: "",
       lotNumber: "",
       expiryDate: "",
+      description: "",
       total: 0,
     };
     setDrugItems([...drugItems, newItem]);
@@ -239,6 +241,7 @@ export function ImportReceiptForm() {
           expiryDate: item.expiryDate
             ? new Date(item.expiryDate).toISOString()
             : undefined,
+          description: item.description.trim() || undefined,
         })),
       };
 
@@ -266,6 +269,7 @@ export function ImportReceiptForm() {
           unitPrice: "",
           lotNumber: "",
           expiryDate: "",
+          description: "",
           total: 0,
         },
       ]);
@@ -397,6 +401,9 @@ export function ImportReceiptForm() {
                   <th className="text-left p-3 font-medium text-foreground min-w-[120px]">
                     Hạn sử dụng
                   </th>
+                  <th className="text-left p-3 font-medium text-foreground min-w-[200px]">
+                    Mô tả
+                  </th>
                   <th className="text-left p-3 font-medium text-foreground min-w-[120px]">
                     Thành tiền
                   </th>
@@ -505,6 +512,16 @@ export function ImportReceiptForm() {
                         value={item.expiryDate}
                         onChange={(e) =>
                           updateDrugItem(item.id, "expiryDate", e.target.value)
+                        }
+                        className="bg-background border-border"
+                      />
+                    </td>
+                    <td className="p-3">
+                      <Input
+                        placeholder="Mô tả sản phẩm"
+                        value={item.description}
+                        onChange={(e) =>
+                          updateDrugItem(item.id, "description", e.target.value)
                         }
                         className="bg-background border-border"
                       />
