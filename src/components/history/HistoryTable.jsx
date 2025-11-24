@@ -94,9 +94,6 @@ export function HistoryTable({ filters }) {
             <thead className="bg-muted/50">
               <tr>
                 <th className="text-left p-4 font-medium text-foreground">
-                  Mã phiếu
-                </th>
-                <th className="text-left p-4 font-medium text-foreground">
                   Loại
                 </th>
                 <th className="text-left p-4 font-medium text-foreground">
@@ -123,7 +120,7 @@ export function HistoryTable({ filters }) {
               {loading ? (
                 <tr>
                   <td
-                    colSpan="8"
+                    colSpan="7"
                     className="p-8 text-center text-muted-foreground"
                   >
                     Đang tải dữ liệu...
@@ -132,7 +129,7 @@ export function HistoryTable({ filters }) {
               ) : transactions.length === 0 ? (
                 <tr>
                   <td
-                    colSpan="8"
+                    colSpan="7"
                     className="p-8 text-center text-muted-foreground"
                   >
                     Không có giao dịch nào
@@ -146,11 +143,6 @@ export function HistoryTable({ filters }) {
                       index % 2 === 0 ? "bg-background" : "bg-muted/20"
                     }`}
                   >
-                    <td className="p-4">
-                      <span className="font-mono text-sm text-medical-blue font-medium">
-                        {item.referenceCode}
-                      </span>
-                    </td>
                     <td className="p-4">{getTypeBadge(item.type)}</td>
                     <td className="p-4">
                       <div className="space-y-1">
@@ -163,7 +155,7 @@ export function HistoryTable({ filters }) {
                       </div>
                     </td>
                     <td className="p-4 text-muted-foreground">
-                      {item.sourceWarehouseId?.name || "-"}
+                      {item.sourceWarehouseId?.name || "Kho trung tâm"}
                     </td>
                     <td className="p-4 text-muted-foreground">
                       {item.departmentId?.name || "-"}
