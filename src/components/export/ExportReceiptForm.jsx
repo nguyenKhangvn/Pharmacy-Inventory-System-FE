@@ -63,6 +63,7 @@ export function ExportReceiptForm() {
   const [searchingProduct, setSearchingProduct] = useState("");
   const [showSuggestions, setShowSuggestions] = useState("");
   const searchTimeoutRef = useRef(null);
+  const inputRef = useRef(null);
 
   // Validation & submission state
   const [validationErrors, setValidationErrors] = useState([]);
@@ -494,54 +495,65 @@ export function ExportReceiptForm() {
                               }
                             }}
                             className="bg-background border-border"
-                            // Đã bỏ disabled vì warehouseId luôn có giá trị
+                            ref={inputRef}
                           />
                           {searchingProduct === item.id && (
                             <div className="absolute right-3 top-1/2 -translate-y-1/2">
                               <div className="animate-spin h-4 w-4 border-2 border-medical-blue border-t-transparent rounded-full" />
                             </div>
                           )}
-                          {showSuggestions === item.id &&
-                            productSuggestions.length > 0 && (
-                              <div className="absolute z-50 w-full mt-1 bg-white border border-border rounded-md shadow-lg max-h-60 overflow-auto">
-                                {productSuggestions.map((product) => (
-                                  <div
-                                    key={product.id}
-                                    onClick={() =>
-                                      selectProduct(item.id, product)
-                                    }
-                                    className="p-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0"
-                                  >
-                                    <div className="font-medium text-foreground">
-                                      {product.name}
-                                    </div>
-                                    <div className="text-xs text-muted-foreground mt-1">
-                                      Mã: {product.code || product.sku} | Tồn
-                                      kho: {product.availableQty} {product.unit}{" "}
-                                      | Giá:{" "}
-                                      {product.unitPrice.toLocaleString(
-                                        "vi-VN"
-                                      )}
-                                      ₫
-                                      {product.nearestExpiry && (
-                                        <span className="ml-2">
-                                          | HSD:{" "}
-                                          {new Date(
-                                            product.nearestExpiry
-                                          ).toLocaleDateString("vi-VN")}
-                                        </span>
-                                      )}
-                                      {product.lotNumber && (
-                                        <span className="ml-2">
-                                          | Lô: {product.lotNumber}
-                                        </span>
-                                      )}
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
                         </div>
+                        {/* Suggestion box nằm ngoài relative, dùng fixed và top theo vị trí input */}
+                        {showSuggestions === item.id &&
+                          productSuggestions.length > 0 &&
+                          inputRef.current && (
+                            <div
+                              className="fixed z-[9999] w-[400px] bg-white border border-border rounded-md shadow-lg max-h-60 overflow-auto"
+                              style={{
+                                left:
+                                  inputRef.current.getBoundingClientRect()
+                                    .left + window.scrollX,
+                                top:
+                                  inputRef.current.getBoundingClientRect().top +
+                                  window.scrollY -
+                                  8 -
+                                  240, // 8px margin, 240px (max-h-60) phía trên
+                                // Nếu muốn sát input thì bỏ - 8 - 240, chỉ cần - suggestionBoxHeight
+                              }}
+                            >
+                              {productSuggestions.map((product) => (
+                                <div
+                                  key={product.id}
+                                  onClick={() =>
+                                    selectProduct(item.id, product)
+                                  }
+                                  className="p-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0"
+                                >
+                                  <div className="font-medium text-foreground">
+                                    {product.name}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground mt-1">
+                                    Mã: {product.code || product.sku} | Tồn kho:{" "}
+                                    {product.availableQty} {product.unit} | Giá:{" "}
+                                    {product.unitPrice.toLocaleString("vi-VN")}₫
+                                    {product.nearestExpiry && (
+                                      <span className="ml-2">
+                                        | HSD:{" "}
+                                        {new Date(
+                                          product.nearestExpiry
+                                        ).toLocaleDateString("vi-VN")}
+                                      </span>
+                                    )}
+                                    {product.lotNumber && (
+                                      <span className="ml-2">
+                                        | Lô: {product.lotNumber}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                       </td>
                       <td className="p-3">
                         <div className="text-sm text-muted-foreground">
