@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,35 +11,88 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, Save, CheckCircle } from "lucide-react";
+import { Plus, Trash2, CheckCircle } from "lucide-react";
+import { transactionService } from "@/services/transactionService";
+import { supplierService } from "@/services/supplierService";
+import { categoryService } from "@/services/categoryService";
 
 export function ImportReceiptForm() {
+  // Form state
+  const [supplierId, setSupplierId] = useState("");
+  const [transactionDate, setTransactionDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
+  const [notes, setNotes] = useState("");
+
+  // Data state
+  const [suppliers, setSuppliers] = useState([]);
+  const [categories, setCategories] = useState([]);
+
+  // Loading & error state
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Drug items state
   const [drugItems, setDrugItems] = useState([
     {
       id: "1",
-      drugName: "",
-      category: "",
+      productName: "",
+      categoryId: "",
+      categoryName: "",
       unit: "",
-      description: "",
+      sku: "",
       quantity: "",
       unitPrice: "",
-      batchNumber: "",
+      lotNumber: "",
       expiryDate: "",
+      description: "",
       total: 0,
     },
   ]);
 
+  // Load suppliers and categories on mount
+  useEffect(() => {
+    loadSuppliers();
+    loadCategories();
+  }, []);
+
+  const loadSuppliers = async () => {
+    try {
+      const response = await supplierService.getSuppliers({
+        status: "active",
+      });
+      setSuppliers(response.data || []);
+    } catch (err) {
+      console.error("Failed to load suppliers:", err);
+      setError("Không thể tải danh sách nhà cung cấp");
+    }
+  };
+
+  const loadCategories = async () => {
+    try {
+      const response = await categoryService.getCategories({
+        status: "active",
+      });
+      setCategories(response.data || []);
+    } catch (err) {
+      console.error("Failed to load categories:", err);
+      setError("Không thể tải danh sách danh mục");
+    }
+  };
+
   const addDrugItem = () => {
     const newItem = {
       id: Date.now().toString(),
-      drugName: "",
-      category: "",
+      productName: "",
+      categoryId: "",
+      categoryName: "",
       unit: "",
-      description: "",
+      sku: "",
       quantity: "",
       unitPrice: "",
-      batchNumber: "",
+      lotNumber: "",
       expiryDate: "",
+      description: "",
       total: 0,
     };
     setDrugItems([...drugItems, newItem]);
@@ -51,21 +104,35 @@ export function ImportReceiptForm() {
     }
   };
 
+  // Thêm useEffect để debug categories
+  useEffect(() => {
+    console.log("Categories updated:", categories);
+  }, [categories]);
+
+  // Thêm useEffect để debug drugItems
+  useEffect(() => {
+    console.log("Drug items updated:", drugItems);
+  }, [drugItems]);
+
   const updateDrugItem = (id, field, value) => {
-    setDrugItems(
-      drugItems.map((item) => {
+    setDrugItems((prevItems) =>
+      prevItems.map((item) => {
         if (item.id === id) {
           const updatedItem = { ...item, [field]: value };
+
+          // Tính toán total nếu quantity hoặc unitPrice thay đổi
           if (field === "quantity" || field === "unitPrice") {
             const quantity =
-              Number.parseFloat(field === "quantity" ? value : item.quantity) ||
-              0;
+              Number.parseFloat(
+                field === "quantity" ? value : updatedItem.quantity
+              ) || 0;
             const unitPrice =
               Number.parseFloat(
-                field === "unitPrice" ? value : item.unitPrice
+                field === "unitPrice" ? value : updatedItem.unitPrice
               ) || 0;
             updatedItem.total = quantity * unitPrice;
           }
+
           return updatedItem;
         }
         return item;
@@ -73,11 +140,147 @@ export function ImportReceiptForm() {
     );
   };
 
+  const updateDrugItemMultiple = (id, updates) => {
+    setDrugItems((prevItems) =>
+      prevItems.map((item) => {
+        if (item.id === id) {
+          const updatedItem = { ...item, ...updates };
+
+          // Tính toán total nếu quantity hoặc unitPrice thay đổi
+          if (
+            updates.quantity !== undefined ||
+            updates.unitPrice !== undefined
+          ) {
+            const quantity = Number.parseFloat(updatedItem.quantity) || 0;
+            const unitPrice = Number.parseFloat(updatedItem.unitPrice) || 0;
+            updatedItem.total = quantity * unitPrice;
+          }
+
+          return updatedItem;
+        }
+        return item;
+      })
+    );
+  };
+
+  const handleCategoryChange = (itemId, value) => {
+    const selectedCategory = categories.find(
+      (cat) => String(cat._id) === String(value)
+    );
+
+    if (selectedCategory) {
+      updateDrugItemMultiple(itemId, {
+        categoryId: String(value),
+        categoryName: selectedCategory.name,
+      });
+    }
+  };
+
   const totalQuantity = drugItems.reduce(
     (sum, item) => sum + (Number.parseFloat(item.quantity) || 0),
     0
   );
   const totalAmount = drugItems.reduce((sum, item) => sum + item.total, 0);
+
+  // Handle form submission
+  const handleSave = async () => {
+    try {
+      // Validation
+      if (!supplierId) {
+        alert("Vui lòng chọn nhà cung cấp");
+        return;
+      }
+
+      if (drugItems.length === 0) {
+        alert("Vui lòng thêm ít nhất một sản phẩm");
+        return;
+      }
+
+      // Validate each drug item
+      for (let i = 0; i < drugItems.length; i++) {
+        const item = drugItems[i];
+        if (!item.productName.trim()) {
+          alert(`Dòng ${i + 1}: Vui lòng nhập tên thuốc`);
+          return;
+        }
+        if (!item.categoryId) {
+          alert(`Dòng ${i + 1}: Vui lòng chọn danh mục`);
+          return;
+        }
+        if (!item.unit.trim()) {
+          alert(`Dòng ${i + 1}: Vui lòng nhập đơn vị tính`);
+          return;
+        }
+        if (!item.quantity || Number.parseFloat(item.quantity) <= 0) {
+          alert(`Dòng ${i + 1}: Số lượng phải lớn hơn 0`);
+          return;
+        }
+        if (item.unitPrice === "" || Number.parseFloat(item.unitPrice) < 0) {
+          alert(`Dòng ${i + 1}: Đơn giá không hợp lệ`);
+          return;
+        }
+      }
+
+      setLoading(true);
+      setError(null);
+
+      // Transform data to API format
+      const transactionData = {
+        type: "INBOUND",
+        supplierId,
+        transactionDate: new Date(transactionDate).toISOString(),
+        notes: notes.trim() || undefined,
+        details: drugItems.map((item) => ({
+          productName: item.productName.trim(),
+          sku: item.sku.trim() || undefined,
+          unit: item.unit.trim(),
+          categoryId: item.categoryId,
+          quantity: Number.parseFloat(item.quantity),
+          unitPrice: Number.parseFloat(item.unitPrice),
+          lotNumber: item.lotNumber.trim() || undefined,
+          expiryDate: item.expiryDate
+            ? new Date(item.expiryDate).toISOString()
+            : undefined,
+          description: item.description.trim() || undefined,
+        })),
+      };
+
+      console.log("Submitting transaction:", transactionData);
+
+      const response = await transactionService.createInbound(transactionData);
+
+      console.log("Transaction created:", response);
+
+      alert("Tạo phiếu nhập kho thành công!");
+
+      // Reset form
+      setSupplierId("");
+      setTransactionDate(new Date().toISOString().split("T")[0]);
+      setNotes("");
+      setDrugItems([
+        {
+          id: "1",
+          productName: "",
+          categoryId: "",
+          categoryName: "",
+          unit: "",
+          sku: "",
+          quantity: "",
+          unitPrice: "",
+          lotNumber: "",
+          expiryDate: "",
+          description: "",
+          total: 0,
+        },
+      ]);
+    } catch (err) {
+      console.error("Failed to create transaction:", err);
+      setError(err.response?.data?.message || "Không thể tạo phiếu nhập kho");
+      alert(err.response?.data?.message || "Không thể tạo phiếu nhập kho");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -97,15 +300,22 @@ export function ImportReceiptForm() {
               >
                 Nhà cung cấp *
               </Label>
-              <Select>
+              <Select
+                value={supplierId}
+                onValueChange={(value) => setSupplierId(String(value))}
+              >
                 <SelectTrigger className="bg-background border-border">
                   <SelectValue placeholder="Chọn nhà cung cấp" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="dhg">DHG Pharma</SelectItem>
-                  <SelectItem value="traphaco">Traphaco</SelectItem>
-                  <SelectItem value="imexpharm">Imexpharm</SelectItem>
-                  <SelectItem value="pymepharco">Pymepharco</SelectItem>
+                  {suppliers.map((supplier) => (
+                    <SelectItem
+                      key={String(supplier.id)}
+                      value={String(supplier.id)}
+                    >
+                      {supplier.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -120,8 +330,10 @@ export function ImportReceiptForm() {
               <Input
                 id="importDate"
                 type="date"
-                defaultValue={new Date().toISOString().split("T")[0]}
+                value={transactionDate}
+                onChange={(e) => setTransactionDate(e.target.value)}
                 className="bg-background border-border"
+                disabled
               />
             </div>
           </div>
@@ -136,6 +348,8 @@ export function ImportReceiptForm() {
             <Textarea
               id="notes"
               placeholder="Ghi chú thêm về phiếu nhập..."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
               className="bg-background border-border resize-none"
               rows={3}
             />
@@ -167,14 +381,14 @@ export function ImportReceiptForm() {
                   <th className="text-left p-3 font-medium text-foreground min-w-[150px]">
                     Tên thuốc *
                   </th>
-                  <th className="text-left p-3 font-medium text-foreground min-w-[150px]">
+                  <th className="text-left p-3 font-medium text-foreground min-w-[200px]">
                     Danh mục thuốc *
                   </th>
-                  <th className="text-left p-3 font-medium text-foreground min-w=[100px]">
+                  <th className="text-left p-3 font-medium text-foreground min-w-[150px]">
                     Đơn vị tính *
                   </th>
                   <th className="text-left p-3 font-medium text-foreground min-w-[150px]">
-                    Mô tả
+                    Mã SKU
                   </th>
                   <th className="text-left p-3 font-medium text-foreground min-w-[100px]">
                     Số lượng *
@@ -183,10 +397,13 @@ export function ImportReceiptForm() {
                     Đơn giá *
                   </th>
                   <th className="text-left p-3 font-medium text-foreground min-w-[100px]">
-                    Số lô *
+                    Số lô
                   </th>
                   <th className="text-left p-3 font-medium text-foreground min-w-[120px]">
-                    Hạn sử dụng *
+                    Hạn sử dụng
+                  </th>
+                  <th className="text-left p-3 font-medium text-foreground min-w-[200px]">
+                    Mô tả
                   </th>
                   <th className="text-left p-3 font-medium text-foreground min-w-[120px]">
                     Thành tiền
@@ -207,22 +424,34 @@ export function ImportReceiptForm() {
                     <td className="p-3">
                       <Input
                         placeholder="Nhập tên thuốc"
-                        value={item.drugName}
+                        value={item.productName}
                         onChange={(e) =>
-                          updateDrugItem(item.id, "drugName", e.target.value)
+                          updateDrugItem(item.id, "productName", e.target.value)
                         }
                         className="bg-background border-border"
                       />
                     </td>
                     <td className="p-3">
-                      <Input
-                        placeholder="Danh mục"
-                        value={item.category}
-                        onChange={(e) =>
-                          updateDrugItem(item.id, "category", e.target.value)
+                      <Select
+                        value={item.categoryId}
+                        onValueChange={(value) =>
+                          handleCategoryChange(item.id, value)
                         }
-                        className="bg-background border-border"
-                      />
+                      >
+                        <SelectTrigger className="bg-background border-border">
+                          <SelectValue placeholder="Chọn danh mục" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map((category) => (
+                            <SelectItem
+                              key={category._id}
+                              value={String(category._id)}
+                            >
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </td>
                     <td className="p-3">
                       <Input
@@ -236,10 +465,10 @@ export function ImportReceiptForm() {
                     </td>
                     <td className="p-3">
                       <Input
-                        placeholder="Mô tả thuốc"
-                        value={item.description}
+                        placeholder="Mã SKU (tùy chọn)"
+                        value={item.sku}
                         onChange={(e) =>
-                          updateDrugItem(item.id, "description", e.target.value)
+                          updateDrugItem(item.id, "sku", e.target.value)
                         }
                         className="bg-background border-border"
                       />
@@ -253,6 +482,7 @@ export function ImportReceiptForm() {
                           updateDrugItem(item.id, "quantity", e.target.value)
                         }
                         className="bg-background border-border"
+                        min="0"
                       />
                     </td>
                     <td className="p-3">
@@ -264,14 +494,15 @@ export function ImportReceiptForm() {
                           updateDrugItem(item.id, "unitPrice", e.target.value)
                         }
                         className="bg-background border-border"
+                        min="0"
                       />
                     </td>
                     <td className="p-3">
                       <Input
                         placeholder="Số lô"
-                        value={item.batchNumber}
+                        value={item.lotNumber}
                         onChange={(e) =>
-                          updateDrugItem(item.id, "batchNumber", e.target.value)
+                          updateDrugItem(item.id, "lotNumber", e.target.value)
                         }
                         className="bg-background border-border"
                       />
@@ -282,6 +513,16 @@ export function ImportReceiptForm() {
                         value={item.expiryDate}
                         onChange={(e) =>
                           updateDrugItem(item.id, "expiryDate", e.target.value)
+                        }
+                        className="bg-background border-border"
+                      />
+                    </td>
+                    <td className="p-3">
+                      <Input
+                        placeholder="Mô tả sản phẩm"
+                        value={item.description}
+                        onChange={(e) =>
+                          updateDrugItem(item.id, "description", e.target.value)
                         }
                         className="bg-background border-border"
                       />
@@ -333,11 +574,21 @@ export function ImportReceiptForm() {
 
       {/* Action Buttons */}
       <div className="flex items-center justify-end space-x-4 pt-6">
-        <Button className="px-6 hover:bg-calm-green/90">
+        <Button
+          onClick={handleSave}
+          disabled={loading}
+          className="px-6 hover:bg-calm-green/90"
+        >
           <CheckCircle className="w-4 h-4 mr-2" />
-          Hoàn thành phiếu nhập
+          {loading ? "Đang xử lý..." : "Hoàn thành phiếu nhập"}
         </Button>
       </div>
+
+      {error && (
+        <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded text-red-700">
+          {error}
+        </div>
+      )}
     </div>
   );
 }
