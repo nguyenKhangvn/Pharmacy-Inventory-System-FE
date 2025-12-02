@@ -333,6 +333,7 @@ export function ImportReceiptForm() {
                 value={transactionDate}
                 onChange={(e) => setTransactionDate(e.target.value)}
                 className="bg-background border-border"
+                disabled
               />
             </div>
           </div>
