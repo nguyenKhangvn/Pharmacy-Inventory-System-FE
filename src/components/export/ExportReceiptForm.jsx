@@ -373,6 +373,7 @@ export function ExportReceiptForm() {
                 value={issueDate}
                 onChange={(e) => setIssueDate(e.target.value)}
                 className="bg-background border-border"
+                disabled
               />
             </div>
           </div>
