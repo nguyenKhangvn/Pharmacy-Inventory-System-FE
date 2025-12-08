@@ -16,7 +16,12 @@ export function HistoryHeader({ onFilterChange }) {
   };
 
   const handleTypeChange = (value) => {
-    onFilterChange({ type: value === "all" ? "OUTBOUND" : value });
+    onFilterChange({ type: value });
+  };
+
+  // Thêm logic lọc theo ngày
+  const handleDateChange = (value) => {
+    onFilterChange({ dateRange: value });
   };
 
   return (
@@ -44,19 +49,18 @@ export function HistoryHeader({ onFilterChange }) {
             </div>
 
             {/* Transaction Type Filter */}
-            <Select defaultValue="all" onValueChange={handleTypeChange}>
+            <Select defaultValue="INBOUND" onValueChange={handleTypeChange}>
               <SelectTrigger className="bg-background">
                 <SelectValue placeholder="Loại giao dịch" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tất cả giao dịch</SelectItem>
                 <SelectItem value="INBOUND">Nhập kho</SelectItem>
                 <SelectItem value="OUTBOUND">Xuất kho</SelectItem>
               </SelectContent>
             </Select>
 
             {/* Date Range */}
-            <Select defaultValue="30days">
+            <Select defaultValue="30days" onValueChange={handleDateChange}>
               <SelectTrigger className="bg-background">
                 <SelectValue placeholder="Khoảng thời gian" />
               </SelectTrigger>
@@ -68,7 +72,6 @@ export function HistoryHeader({ onFilterChange }) {
                 <SelectItem value="custom">Tùy chỉnh</SelectItem>
               </SelectContent>
             </Select>
-
           </div>
         </CardContent>
       </Card>
