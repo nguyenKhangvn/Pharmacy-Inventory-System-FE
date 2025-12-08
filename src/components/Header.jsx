@@ -1,15 +1,44 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Bell, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { UserProfileModal } from "./users/UserProfileModal";
 import { useAuth } from "@/context/AuthContext";
+import { getAlertsList } from "@/services/alertService";
 
 export function Header() {
   const { user, logout } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  // Fetch alerts khi component mount
+  useEffect(() => {
+    fetchAlerts();
+  }, []);
+
+  const fetchAlerts = async () => {
+    try {
+      setLoading(true);
+      const response = await getAlertsList({
+        page: 1,
+        limit: 10,
+        status: "ACTIVE", // Chỉ lấy alerts active
+        sortBy: "createdAt",
+        order: "desc",
+      });
+
+      if (response.success && response.data) {
+        setNotifications(response.data);
+      }
+    } catch (error) {
+      console.error("Error fetching alerts:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -26,44 +55,32 @@ export function Header() {
     return user.username.substring(0, 2).toUpperCase();
   };
 
-  const notifications = [
-    {
-      id: 1,
-      message: "Paracetamol 500mg sắp hết hạn",
-      time: "5 phút trước",
-      type: "expiry",
-    },
-    {
-      id: 2,
-      message: "Vitamin C 1000mg tồn kho thấp",
-      time: "15 phút trước",
-      type: "low-stock",
-    },
-    {
-      id: 3,
-      message: "Amoxicillin 250mg hết hàng",
-      time: "1 giờ trước",
-      type: "out-of-stock",
-    },
-    {
-      id: 4,
-      message: "Phiếu nhập từ DHG Pharma đã được duyệt",
-      time: "2 giờ trước",
-      type: "approved",
-    },
-    {
-      id: 5,
-      message: "Aspirin 100mg sắp hết hạn",
-      time: "3 giờ trước",
-      type: "expiry",
-    },
-    {
-      id: 6,
-      message: "Ibuprofen 400mg tồn kho thấp",
-      time: "4 giờ trước",
-      type: "low-stock",
-    },
-  ];
+  // Helper để format thời gian
+  const getTimeAgo = (dateString) => {
+    const now = new Date();
+    const past = new Date(dateString);
+    const diffInMinutes = Math.floor((now - past) / 60000);
+
+    if (diffInMinutes < 1) return "Vừa xong";
+    if (diffInMinutes < 60) return `${diffInMinutes} phút trước`;
+
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) return `${diffInHours} giờ trước`;
+
+    const diffInDays = Math.floor(diffInHours / 24);
+    return `${diffInDays} ngày trước`;
+  };
+
+  // Helper để lấy màu badge theo severity
+  const getSeverityColor = (severity) => {
+    const colors = {
+      CRITICAL: "bg-red-500",
+      HIGH: "bg-orange-500",
+      MEDIUM: "bg-yellow-500",
+      LOW: "bg-blue-500",
+    };
+    return colors[severity] || "bg-gray-500";
+  };
 
   return (
     <header className="bg-card border-b border-border px-8 py-4">
@@ -79,31 +96,61 @@ export function Header() {
               onClick={() => setIsNotificationOpen(!isNotificationOpen)}
             >
               <Bell className="w-5 h-5" />
-              <Badge
-                variant="destructive"
-                className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
-              >
-                6
-              </Badge>
+              {notifications.length > 0 && (
+                <Badge
+                  variant="destructive"
+                  className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                >
+                  {notifications.length}
+                </Badge>
+              )}
             </Button>
 
             {isNotificationOpen && (
-              <div className="absolute right-0 mt-2 w-80 bg-card border border-border rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
+              <div className="absolute right-0 mt-2 w-96 bg-card border border-border rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
                 <div className="p-4 border-b border-border sticky top-0 bg-card">
-                  <h3 className="font-semibold text-foreground">Thông báo</h3>
+                  <h3 className="font-semibold text-foreground">
+                    Thông báo cảnh báo
+                  </h3>
                 </div>
                 <div className="divide-y divide-border">
-                  {notifications.map((notif) => (
-                    <div
-                      key={notif.id}
-                      className="p-3 hover:bg-muted transition-colors cursor-pointer"
-                    >
-                      <p className="text-sm text-foreground">{notif.message}</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {notif.time}
-                      </p>
+                  {loading ? (
+                    <div className="p-8 text-center text-muted-foreground">
+                      Đang tải...
                     </div>
-                  ))}
+                  ) : notifications.length === 0 ? (
+                    <div className="p-8 text-center text-muted-foreground">
+                      Không có cảnh báo mới
+                    </div>
+                  ) : (
+                    notifications.map((notif) => (
+                      <div
+                        key={notif.id}
+                        className="p-3 hover:bg-muted transition-colors cursor-pointer"
+                      >
+                        <div className="flex items-start gap-2">
+                          <div
+                            className={`w-2 h-2 rounded-full mt-1.5 ${getSeverityColor(
+                              notif.severity
+                            )}`}
+                          />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-foreground">
+                              {notif.message}
+                            </p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-xs text-muted-foreground">
+                                {notif.product?.name} - {notif.warehouse?.name}
+                              </span>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {getTimeAgo(notif.createdAt)}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             )}

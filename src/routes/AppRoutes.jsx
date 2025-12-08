@@ -17,7 +17,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 const AppRoutes = () => {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/categories" replace />} />
+      <Route path="/" element={<DashboardPage />} />
       <Route path="/login" element={<Login />} />
       <Route path="/categories" element={<CategoriesPage />} />
       <Route path="/suppliers" element={<SuppliersPage />} />
