@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -11,76 +11,64 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { getAlertDetails } from "@/services/alertService";
 
-const alertsData = [
-  {
-    id: 1,
-    name: "Paracetamol 500mg",
-    currentStock: "10 viên",
-    minStock: "100 viên",
-    ratio: "10%",
-    status: "Hết hàng",
-    statusType: "out-of-stock",
-    date: "30/11/2025",
-  },
-  {
-    id: 2,
-    name: "Amoxicillin 250mg",
-    currentStock: "75 viên",
-    minStock: "150 viên",
-    ratio: "50%",
-    status: "Tồn kho thấp",
-    statusType: "low-stock",
-    date: "30/11/2025",
-  },
-  {
-    id: 3,
-    name: "Vitamin C 1000mg",
-    currentStock: "200 viên",
-    minStock: "200 viên",
-    ratio: "100%",
-    status: "Tồn kho thấp",
-    statusType: "low-stock",
-    date: "30/11/2025",
-  },
-  {
-    id: 4,
-    name: "Ibuprofen 400mg",
-    currentStock: "25 viên",
-    minStock: "150 viên",
-    ratio: "17%",
-    status: "Hết hàng",
-    statusType: "out-of-stock",
-    date: "30/11/2025",
-  },
-  {
-    id: 5,
-    name: "Omeprazole 20mg",
-    currentStock: "50 viên",
-    minStock: "100 viên",
-    ratio: "50%",
-    status: "Tồn kho thấp",
-    statusType: "low-stock",
-    date: "30/11/2025",
-  },
-  {
-    id: 6,
-    name: "Metformin 500mg",
-    currentStock: "30 viên",
-    minStock: "150 viên",
-    ratio: "20%",
-    status: "Hết hàng",
-    statusType: "out-of-stock",
-    date: "01/12/2025",
-  },
-];
+const getStatusLabel = (alertType) => {
+  switch (alertType) {
+    case "OUT_OF_STOCK":
+      return "Hết hàng";
+    case "LOW_STOCK":
+      return "Tồn kho thấp";
+    case "EXPIRING_SOON":
+      return "Sắp hết hạn";
+    case "EXPIRED":
+      return "Đã hết hạn";
+    default:
+      return "Tồn kho thấp";
+  }
+};
+
+const getStatusType = (alertType) => {
+  if (alertType === "OUT_OF_STOCK" || alertType === "EXPIRED") {
+    return "out-of-stock";
+  }
+  return "low-stock";
+};
+
+const formatDate = (dateString) => {
+  if (!dateString) return "-";
+  const date = new Date(dateString);
+  return date.toLocaleDateString("vi-VN");
+};
 
 export function AlertsTable() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [alerts, setAlerts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredData = alertsData.filter((item) =>
-    item.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  useEffect(() => {
+    const loadAlerts = async () => {
+      try {
+        setLoading(true);
+        const response = await getAlertDetails({ search: searchQuery });
+
+        if (response.success && response.data) {
+          setAlerts(response.data);
+        }
+      } catch (error) {
+        console.error("Error loading alerts:", error);
+        setAlerts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const timer = setTimeout(() => {
+      loadAlerts();
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   return (
     <Card className="border-border">
@@ -131,47 +119,75 @@ export function AlertsTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredData.map((item) => (
-              <TableRow key={item.id} className="hover:bg-muted/30">
-                <TableCell className="font-medium text-foreground">
-                  {item.name}
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {item.currentStock}
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {item.minStock}
-                </TableCell>
-                <TableCell>
-                  <span
-                    className={
-                      item.statusType === "out-of-stock"
-                        ? "text-danger font-semibold"
-                        : "text-muted-foreground"
-                    }
-                  >
-                    {item.ratio}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  {item.statusType === "out-of-stock" ? (
-                    <Badge
-                      variant="destructive"
-                      className="bg-danger hover:bg-danger/90"
-                    >
-                      {item.status}
-                    </Badge>
-                  ) : (
-                    <Badge className="bg-warning text-warning-foreground hover:bg-warning/90">
-                      {item.status}
-                    </Badge>
-                  )}
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {item.date}
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-8">
+                  Đang tải...
                 </TableCell>
               </TableRow>
-            ))}
+            ) : alerts.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={6}
+                  className="text-center py-8 text-muted-foreground"
+                >
+                  Không có cảnh báo nào
+                </TableCell>
+              </TableRow>
+            ) : (
+              alerts.map((alert) => {
+                const statusType = getStatusType(alert.alertType);
+                const status = getStatusLabel(alert.alertType);
+                const ratio =
+                  alert.currentStock && alert.minimumStock
+                    ? `${Math.round(
+                        (alert.currentStock / alert.minimumStock) * 100
+                      )}%`
+                    : "-";
+
+                return (
+                  <TableRow key={alert._id} className="hover:bg-muted/30">
+                    <TableCell className="font-medium text-foreground">
+                      {alert.productName}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {alert.currentStock || 0} viên
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {alert.minimumStock || 0} viên
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        className={
+                          statusType === "out-of-stock"
+                            ? "text-danger font-semibold"
+                            : "text-muted-foreground"
+                        }
+                      >
+                        {ratio}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      {statusType === "out-of-stock" ? (
+                        <Badge
+                          variant="destructive"
+                          className="bg-danger hover:bg-danger/90"
+                        >
+                          {status}
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-warning text-warning-foreground hover:bg-warning/90">
+                          {status}
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {formatDate(alert.createdAt)}
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            )}
           </TableBody>
         </Table>
       </div>
