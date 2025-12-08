@@ -1,42 +1,73 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Package, DollarSign, AlertTriangle, TrendingDown } from "lucide-react";
-
-const kpis = [
-  {
-    title: "Tổng số loại thuốc",
-    value: "2,847",
-    change: "+12%",
-    changeType: "positive",
-    icon: Package,
-    color: "medical-blue",
-  },
-  {
-    title: "Tổng giá trị tồn kho",
-    value: "₫2.4B",
-    change: "+8.2%",
-    changeType: "positive",
-    icon: DollarSign,
-    color: "calm-green",
-  },
-  {
-    title: "Thuốc sắp hết hạn",
-    value: "23",
-    change: "-5",
-    changeType: "negative",
-    icon: AlertTriangle,
-    color: "warning",
-  },
-  {
-    title: "Thuốc dưới tồn tối thiểu",
-    value: "47",
-    change: "+3",
-    changeType: "negative",
-    icon: TrendingDown,
-    color: "danger",
-  },
-];
+import { getDashboardData } from "@/services/dashboardService";
 
 export function KPICards() {
+  const [kpis, setKpis] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchKPIs();
+  }, []);
+
+  const fetchKPIs = async () => {
+    try {
+      setLoading(true);
+      const response = await getDashboardData();
+
+      if (response.success && response.data?.kpis) {
+        const { totalProducts, totalStockValue, expiringCount, lowStockCount } =
+          response.data.kpis;
+
+        setKpis([
+          {
+            title: "Tổng số loại thuốc",
+            value: totalProducts.toLocaleString("vi-VN"),
+            icon: Package,
+            color: "medical-blue",
+          },
+          {
+            title: "Tổng giá trị tồn kho",
+            value: `₫${(totalStockValue / 1000000).toFixed(1)}M`,
+            icon: DollarSign,
+            color: "calm-green",
+          },
+          {
+            title: "Thuốc sắp hết hạn",
+            value: expiringCount.toString(),
+            icon: AlertTriangle,
+            color: "warning",
+          },
+          {
+            title: "Thuốc dưới tồn tối thiểu",
+            value: lowStockCount.toString(),
+            icon: TrendingDown,
+            color: "danger",
+          },
+        ]);
+      }
+    } catch (error) {
+      console.error("Error fetching KPIs:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[1, 2, 3, 4].map((i) => (
+          <Card key={i} className="border-0 shadow-sm animate-pulse">
+            <CardContent className="p-6">
+              <div className="h-24 bg-muted rounded" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       {kpis.map((kpi) => (
@@ -49,15 +80,6 @@ export function KPICards() {
                 </p>
                 <p className="text-2xl font-bold text-foreground">
                   {kpi.value}
-                </p>
-                <p
-                  className={`text-xs font-medium ${
-                    kpi.changeType === "positive"
-                      ? "text-calm-green"
-                      : "text-danger"
-                  }`}
-                >
-                  {kpi.change} so với tháng trước
                 </p>
               </div>
               <div

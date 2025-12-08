@@ -1,43 +1,72 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Clock, Package } from "lucide-react";
+import { AlertTriangle, Clock, Package, PackageX } from "lucide-react";
+import { useState, useEffect } from "react";
+import { getDashboardData } from "@/services/dashboardService";
 
-const alerts = [
-  {
-    id: 1,
-    type: "expiry",
-    title: "Paracetamol 500mg",
-    description: "Hết hạn trong 7 ngày",
-    priority: "high",
-    icon: AlertTriangle,
-  },
-  {
-    id: 2,
-    type: "stock",
-    title: "Amoxicillin 250mg",
-    description: "Còn 15 viên (dưới tồn tối thiểu)",
-    priority: "medium",
-    icon: Package,
-  },
-  {
-    id: 3,
-    type: "expiry",
-    title: "Vitamin C 1000mg",
-    description: "Hết hạn trong 14 ngày",
-    priority: "medium",
-    icon: Clock,
-  },
-  {
-    id: 4,
-    type: "stock",
-    title: "Aspirin 100mg",
-    description: "Còn 8 viên (dưới tồn tối thiểu)",
-    priority: "high",
-    icon: Package,
-  },
-];
+const getAlertIcon = (alertType) => {
+  switch (alertType) {
+    case "EXPIRING_SOON":
+    case "EXPIRED":
+      return Clock;
+    case "OUT_OF_STOCK":
+      return PackageX;
+    case "LOW_STOCK":
+      return Package;
+    default:
+      return AlertTriangle;
+  }
+};
+
+const getAlertPriority = (severity) => {
+  switch (severity) {
+    case "CRITICAL":
+    case "HIGH":
+      return "high";
+    case "MEDIUM":
+      return "medium";
+    default:
+      return "low";
+  }
+};
 
 export function AlertsSection() {
+  const [alerts, setAlerts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadAlerts = async () => {
+      try {
+        setLoading(true);
+        const response = await getDashboardData();
+
+        if (response.success && response.data?.alerts) {
+          // Lấy tối đa 5 cảnh báo đầu tiên
+          const limitedAlerts = response.data.alerts
+            .slice(0, 5)
+            .map((alert) => ({
+              id: alert.id,
+              type: alert.type,
+              title: alert.product?.name || "N/A",
+              description: alert.message,
+              priority: getAlertPriority(alert.severity),
+              icon: getAlertIcon(alert.type),
+              severity: alert.severity,
+              warehouse: alert.warehouse?.name,
+            }));
+          setAlerts(limitedAlerts);
+        }
+      } catch (error) {
+        console.error("Error loading alerts:", error);
+        setAlerts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadAlerts();
+  }, []);
+
   return (
     <Card className="border-0 shadow-sm">
       <CardHeader className="pb-4">
@@ -49,44 +78,54 @@ export function AlertsSection() {
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
-        {alerts.map((alert) => (
-          <div
-            key={alert.id}
-            className="flex items-start space-x-3 p-3 rounded-lg bg-muted/50"
-          >
-            <div
-              className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                alert.priority === "high"
-                  ? "bg-danger-light"
-                  : "bg-warning-light"
-              }`}
-            >
-              <alert.icon
-                className={`w-4 h-4 ${
-                  alert.priority === "high" ? "text-danger" : "text-warning"
-                }`}
-              />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-foreground truncate">
-                  {alert.title}
-                </p>
-                <Badge
-                  variant={
-                    alert.priority === "high" ? "destructive" : "secondary"
-                  }
-                  className="text-xs"
-                >
-                  {alert.priority === "high" ? "Cao" : "Trung bình"}
-                </Badge>
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {alert.description}
-              </p>
-            </div>
+        {loading ? (
+          <div className="text-center py-8 text-muted-foreground">
+            Đang tải...
           </div>
-        ))}
+        ) : alerts.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            Không có cảnh báo nào
+          </div>
+        ) : (
+          alerts.map((alert) => (
+            <div
+              key={alert.id}
+              className="flex items-start space-x-3 p-3 rounded-lg bg-muted/50"
+            >
+              <div
+                className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                  alert.priority === "high"
+                    ? "bg-danger-light"
+                    : "bg-warning-light"
+                }`}
+              >
+                <alert.icon
+                  className={`w-4 h-4 ${
+                    alert.priority === "high" ? "text-danger" : "text-warning"
+                  }`}
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium text-foreground truncate">
+                    {alert.title}
+                  </p>
+                  <Badge
+                    variant={
+                      alert.priority === "high" ? "destructive" : "secondary"
+                    }
+                    className="text-xs"
+                  >
+                    {alert.priority === "high" ? "Cao" : "Trung bình"}
+                  </Badge>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {alert.description}
+                </p>
+              </div>
+            </div>
+          ))
+        )}
       </CardContent>
     </Card>
   );
