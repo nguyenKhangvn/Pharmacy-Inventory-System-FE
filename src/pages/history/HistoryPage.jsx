@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Header } from "@/components/Header";
 import { HistoryHeader } from "@/components/history/HistoryHeader";
 import { HistoryTable } from "@/components/history/HistoryTable";
@@ -6,15 +6,17 @@ import { Sidebar } from "@/components/Sidebar";
 
 export default function HistoryPage() {
   const [filters, setFilters] = useState({
-    type: "",
     search: "",
-    fromDate: "",
-    toDate: "",
+    type: "INBOUND",
+    startDate: "",
+    endDate: "",
   });
 
-  const handleFilterChange = (newFilters) => {
-    setFilters((prev) => ({ ...prev, ...newFilters }));
-  };
+  const handleFilterChange = useCallback((newFilters) => {
+    setFilters((prev) => {
+      return { ...prev, ...newFilters };
+    });
+  }, []);
 
   return (
     <div className="flex min-h-screen bg-background">
