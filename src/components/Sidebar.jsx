@@ -52,21 +52,7 @@ export function Sidebar() {
         ))}
       </nav>
 
-      <div className="p-4 border-t border-border">
-        <div className="flex items-center space-x-3 px-3 py-2">
-          <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
-            <span className="text-sm font-medium text-muted-foreground">
-              DS
-            </span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-foreground truncate">
-              Dược sĩ Nguyễn Văn A
-            </p>
-            <p className="text-xs text-muted-foreground truncate">Khoa Dược</p>
-          </div>
-        </div>
-      </div>
+      
     </div>
   );
 }

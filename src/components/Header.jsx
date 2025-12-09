@@ -216,7 +216,7 @@ export function Header() {
                       handleLogout();
                       setIsProfileOpen(false);
                     }}
-                    className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-foreground hover:bg-muted rounded-lg transition-colors"
+                    className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-foreground hover:bg-muted rounded-lg transition-colors "
                   >
                     <LogOut className="w-4 h-4" />
                     <span>Đăng xuất</span>
@@ -232,6 +232,7 @@ export function Header() {
         isOpen={isProfileModalOpen}
         onClose={() => setIsProfileModalOpen(false)}
         onLogout={handleLogout}
+        user={user}
       />
     </header>
   );
