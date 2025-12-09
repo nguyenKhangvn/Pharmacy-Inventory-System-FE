@@ -29,6 +29,7 @@ export const transactionService = {
     if (toDate) queryParams.append("toDate", toDate);
     if (page) queryParams.append("page", page);
     if (limit) queryParams.append("limit", limit);
+    if (params.lotNumber) queryParams.append("lotNumber", params.lotNumber);
 
     const response = await api.get(`/transactions?${queryParams.toString()}`);
     return response.data;
@@ -46,6 +47,18 @@ export const transactionService = {
   async cancel(id, reason) {
     const response = await api.post(`/transactions/${id}/cancel`, { reason });
     return response.data;
+  },
+
+  async getTransactionDetails(id, type) {
+    try {
+      const response = await api.get(`/transactions/${id}`, {
+        params: { type },
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching transaction details:", error);
+      throw error;
+    }
   },
 };
 
