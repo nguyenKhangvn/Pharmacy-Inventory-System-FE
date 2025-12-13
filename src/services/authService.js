@@ -2,12 +2,19 @@ import api from "./api";
 
 export const authService = {
   async login(credentials) {
-    const response = await api.post("/auth/login", credentials);
-    if (response.data.success && response.data.data.token) {
-      localStorage.setItem("token", response.data.data.token);
-      localStorage.setItem("user", JSON.stringify(response.data.data.user));
+    try {
+      const response = await api.post("/auth/login", credentials);
+      if (response.data.success && response.data.data.token) {
+        localStorage.setItem("token", response.data.data.token);
+        localStorage.setItem("user", JSON.stringify(response.data.data.user));
+      }
+      return response.data;
+    } catch (err) {
+      if (err.response?.status === 401) {
+        throw new Error("Tên đăng nhập hoặc mật khẩu không chính xác");
+      }
+      throw err;
     }
-    return response.data;
   },
 
   async register(userData) {
