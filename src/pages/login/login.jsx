@@ -113,17 +113,7 @@ const Login = () => {
           </Button>
         </form>
 
-        <div className="mt-6 text-center">
-          <p className="text-gray-600">
-            Chưa có tài khoản?{" "}
-            <Link
-              to="/register"
-              className="text-blue-600 hover:underline font-medium"
-            >
-              Đăng ký ngay
-            </Link>
-          </p>
-        </div>
+       
       </div>
     </div>
   );

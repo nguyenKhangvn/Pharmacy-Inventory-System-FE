@@ -52,9 +52,6 @@ export function CategoriesTable({
                   Số loại thuốc
                 </th>
                 <th className="text-left p-4 font-medium text-foreground">
-                  Ngày tạo
-                </th>
-                <th className="text-left p-4 font-medium text-foreground">
                   Hành động
                 </th>
               </tr>
@@ -91,10 +88,7 @@ export function CategoriesTable({
                       {category.description}
                     </td>
                     <td className="p-4 text-muted-foreground">
-                      {category.drugCount || 0}
-                    </td>
-                    <td className="p-4 text-muted-foreground">
-                      {formatDate(category.createdAt)}
+                      {category.productCount || 0}
                     </td>
                     <td className="p-4">
                       <DropdownMenu>
@@ -131,35 +125,37 @@ export function CategoriesTable({
 
         {categories.length > 0 && (
           <div className="flex items-center justify-between p-4 border-t border-border">
-            <div className="text-sm text-muted-foreground">
-              Hiển thị{" "}
-              <span className="font-medium text-foreground">
-                1-{categories.length}
-              </span>{" "}
-              trong tổng số{" "}
-              <span className="font-medium text-foreground">
-                {pagination.total}
-              </span>{" "}
-              danh mục
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Hiển thị:</span>
+              <select
+                value={pagination.limit}
+                onChange={(e) => onPageChange(1, Number(e.target.value))}
+                className="px-3 py-1 border border-input rounded-md bg-background"
+              >
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+              <span className="text-sm text-muted-foreground">
+                Tổng: {pagination.total} danh mục
+              </span>
             </div>
 
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 bg-transparent"
                 onClick={() => onPageChange(pagination.page - 1)}
                 disabled={pagination.page === 1}
               >
                 Trước
               </Button>
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm">
                 Trang {pagination.page} / {pagination.pages}
               </span>
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 bg-transparent"
                 onClick={() => onPageChange(pagination.page + 1)}
                 disabled={pagination.page === pagination.pages}
               >

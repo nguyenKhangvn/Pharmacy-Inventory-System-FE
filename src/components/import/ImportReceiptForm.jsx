@@ -43,12 +43,27 @@ export function ImportReceiptForm() {
       sku: "",
       quantity: "",
       unitPrice: "",
+      unitPriceDisplay: "",
       lotNumber: "",
       expiryDate: "",
       description: "",
       total: 0,
     },
   ]);
+
+  // Helper function to format number with thousand separators
+  const formatNumber = (value) => {
+    if (!value) return "";
+    const numStr = value.toString().replace(/[^0-9]/g, "");
+    if (!numStr) return "";
+    return Number(numStr).toLocaleString("vi-VN");
+  };
+
+  // Helper function to parse formatted number to raw number
+  const parseFormattedNumber = (value) => {
+    if (!value) return "";
+    return value.toString().replace(/[^0-9]/g, "");
+  };
 
   // Load suppliers and categories on mount
   useEffect(() => {
@@ -90,6 +105,7 @@ export function ImportReceiptForm() {
       sku: "",
       quantity: "",
       unitPrice: "",
+      unitPriceDisplay: "",
       lotNumber: "",
       expiryDate: "",
       description: "",
@@ -211,13 +227,46 @@ export function ImportReceiptForm() {
           alert(`Dòng ${i + 1}: Vui lòng nhập đơn vị tính`);
           return;
         }
-        if (!item.quantity || Number.parseFloat(item.quantity) <= 0) {
+        // Validate quantity is a valid number
+        if (!item.quantity || item.quantity.toString().trim() === "") {
+          alert(`Dòng ${i + 1}: Vui lòng nhập số lượng`);
+          return;
+        }
+        if (isNaN(item.quantity) || isNaN(Number.parseFloat(item.quantity))) {
+          alert(`Dòng ${i + 1}: Số lượng không đúng định dạng. Vui lòng nhập số`);
+          return;
+        }
+        if (Number.parseFloat(item.quantity) <= 0) {
           alert(`Dòng ${i + 1}: Số lượng phải lớn hơn 0`);
           return;
         }
-        if (item.unitPrice === "" || Number.parseFloat(item.unitPrice) < 0) {
+        // Validate unit price is a valid number
+        if (item.unitPrice === "" || item.unitPrice === null || item.unitPrice === undefined) {
+          alert(`Dòng ${i + 1}: Vui lòng nhập đơn giá`);
+          return;
+        }
+        if (isNaN(item.unitPrice) || isNaN(Number.parseFloat(item.unitPrice))) {
+          alert(`Dòng ${i + 1}: Đơn giá không đúng định dạng. Vui lòng nhập số`);
+          return;
+        }
+        if (Number.parseFloat(item.unitPrice) < 0) {
           alert(`Dòng ${i + 1}: Đơn giá không hợp lệ`);
           return;
+        }
+        
+        // Validate expiry date must be greater than transaction date
+        if (item.expiryDate) {
+          const expiryDate = new Date(item.expiryDate);
+          const importDate = new Date(transactionDate);
+          
+          // Reset time to compare only dates
+          expiryDate.setHours(0, 0, 0, 0);
+          importDate.setHours(0, 0, 0, 0);
+          
+          if (expiryDate <= importDate) {
+            alert(`Dòng ${i + 1}: Hạn sử dụng phải lớn hơn ngày nhập kho. Không thể nhập kho thuốc đã hết hạn hoặc hết hạn trong ngày nhập.`);
+            return;
+          }
         }
       }
 
@@ -267,6 +316,7 @@ export function ImportReceiptForm() {
           sku: "",
           quantity: "",
           unitPrice: "",
+          unitPriceDisplay: "",
           lotNumber: "",
           expiryDate: "",
           description: "",
@@ -487,14 +537,18 @@ export function ImportReceiptForm() {
                     </td>
                     <td className="p-3">
                       <Input
-                        type="number"
+                        type="text"
                         placeholder="0"
-                        value={item.unitPrice}
-                        onChange={(e) =>
-                          updateDrugItem(item.id, "unitPrice", e.target.value)
-                        }
+                        value={item.unitPriceDisplay || ""}
+                        onChange={(e) => {
+                          const rawValue = parseFormattedNumber(e.target.value);
+                          const formattedValue = formatNumber(rawValue);
+                          updateDrugItemMultiple(item.id, {
+                            unitPrice: rawValue,
+                            unitPriceDisplay: formattedValue,
+                          });
+                        }}
                         className="bg-background border-border"
-                        min="0"
                       />
                     </td>
                     <td className="p-3">

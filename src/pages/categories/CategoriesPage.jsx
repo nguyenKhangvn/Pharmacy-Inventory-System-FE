@@ -155,28 +155,6 @@ export default function CategoriesPage() {
             onPageChange={handlePageChange}
           />
 
-          {pagination.pages > 1 && (
-            <div className="flex items-center justify-center space-x-2 mt-4">
-              <Button
-                variant="outline"
-                onClick={() => handlePageChange(pagination.page - 1)}
-                disabled={pagination.page === 1}
-              >
-                Trước
-              </Button>
-              <span className="text-sm text-muted-foreground">
-                Trang {pagination.page} / {pagination.pages}
-              </span>
-              <Button
-                variant="outline"
-                onClick={() => handlePageChange(pagination.page + 1)}
-                disabled={pagination.page === pagination.pages}
-              >
-                Sau
-              </Button>
-            </div>
-          )}
-
           <AddCategoryDialog
             open={isAddDialogOpen}
             onOpenChange={setIsAddDialogOpen}
