@@ -440,7 +440,7 @@ export function ImportReceiptForm() {
                   <th className="text-left p-3 font-medium text-foreground min-w-[150px]">
                     Mã SKU
                   </th>
-                  <th className="text-left p-3 font-medium text-foreground min-w-[100px]">
+                  <th className="text-left p-3 font-medium text-foreground min-w-[130px]">
                     Số lượng *
                   </th>
                   <th className="text-left p-3 font-medium text-foreground min-w-[120px]">
