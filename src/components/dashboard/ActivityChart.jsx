@@ -40,7 +40,7 @@ export function ActivityChart() {
   };
 
   return (
-    <Card className="border-0 shadow-sm">
+    <Card className="border-2 border-border shadow-sm">
       <CardHeader className="pb-4">
         <CardTitle className="text-lg font-semibold text-foreground">
           Hoạt động Nhập/Xuất kho
