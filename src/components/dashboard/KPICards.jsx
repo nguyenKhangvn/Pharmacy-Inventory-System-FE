@@ -29,7 +29,7 @@ export function KPICards() {
           },
           {
             title: "Tổng giá trị tồn kho",
-            value: `₫${(totalStockValue / 1000000).toFixed(1)}M`,
+            value: `${(totalStockValue / 1000000).toFixed(1)}M đ`,
             icon: DollarSign,
             color: "calm-green",
           },
@@ -71,19 +71,22 @@ export function KPICards() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       {kpis.map((kpi) => (
-        <Card key={kpi.title} className="border-0 shadow-sm">
+        <Card key={kpi.title} className="border-2 border-border shadow-sm">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="space-y-2">
+            <div className="flex items-center justify-between gap-4">
+              {/* TEXT */}
+              <div className="flex flex-col justify-center space-y-1 flex-1">
                 <p className="text-sm font-medium text-muted-foreground">
                   {kpi.title}
                 </p>
-                <p className="text-2xl font-bold text-foreground">
+                <p className="text-2xl font-bold text-foreground tracking-tight">
                   {kpi.value}
                 </p>
               </div>
+
+              {/* ICON */}
               <div
-                className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                className={`w-12 h-12 rounded-lg flex items-center justify-center shrink-0 ${
                   kpi.color === "medical-blue"
                     ? "bg-medical-blue-light"
                     : kpi.color === "calm-green"
@@ -96,7 +99,7 @@ export function KPICards() {
                 <kpi.icon
                   className={`w-6 h-6 ${
                     kpi.color === "medical-blue"
-                      ? "text-medical-blue"
+                      ? "text-foreground"
                       : kpi.color === "calm-green"
                       ? "text-calm-green"
                       : kpi.color === "warning"
