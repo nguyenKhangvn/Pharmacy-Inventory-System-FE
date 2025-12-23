@@ -20,13 +20,18 @@ export const transactionService = {
   },
 
   async getTransactions(params = {}) {
-    const { type, search, fromDate, toDate, page, limit } = params;
+    const { type, search, startDate, endDate, fromDate, toDate, page, limit } = params;
     const queryParams = new URLSearchParams();
 
     if (type) queryParams.append("type", type);
     if (search) queryParams.append("search", search);
-    if (fromDate) queryParams.append("fromDate", fromDate);
-    if (toDate) queryParams.append("toDate", toDate);
+    
+    // Support both startDate/endDate and fromDate/toDate
+    const actualFromDate = startDate || fromDate;
+    const actualToDate = endDate || toDate;
+    
+    if (actualFromDate) queryParams.append("fromDate", actualFromDate);
+    if (actualToDate) queryParams.append("toDate", actualToDate);
     if (page) queryParams.append("page", page);
     if (limit) queryParams.append("limit", limit);
     if (params.lotNumber) queryParams.append("lotNumber", params.lotNumber);
