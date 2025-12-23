@@ -29,6 +29,7 @@ export function ReportsHeader({ initialStartDate, initialEndDate, onApply }) {
     if (!start || !end) return;
 
     const startDateObj = new Date(start);
+    startDateObj.setHours(0, 0, 0, 0);
     const endDateObj = new Date(end);
     endDateObj.setHours(0, 0, 0, 0);
     const today = new Date();
