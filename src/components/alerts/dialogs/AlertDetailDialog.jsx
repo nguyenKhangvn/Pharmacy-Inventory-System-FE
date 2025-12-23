@@ -44,12 +44,38 @@ const STATUS_LABELS = {
   RESOLVED: "Đã giải quyết",
 };
 
+const getExpiryInfo = (expiryDate, alertType) => {
+  if (!expiryDate) return { daysUntilExpiry: null, isExpired: false, statusLabel: null };
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const expiry = new Date(expiryDate);
+  expiry.setHours(0, 0, 0, 0);
+  
+  const daysUntilExpiry = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+  const isExpired = daysUntilExpiry < 0;
+  
+  let statusLabel = null;
+  if (isExpired) {
+    statusLabel = "Đã hết hạn";
+  } else if (alertType === 'EXPIRING_SOON') {
+    statusLabel = "Sắp hết hạn";
+  }
+  
+  return { daysUntilExpiry, isExpired, statusLabel };
+};
+
 export function AlertDetailDialog({ alert, open, onClose, onUpdate }) {
   const [note, setNote] = useState("");
   const [resolution, setResolution] = useState("");
   const [loading, setLoading] = useState(false);
 
   if (!alert) return null;
+
+  // Calculate expiry info dynamically
+  const expiryInfo = getExpiryInfo(alert.expiryDate, alert.alertType);
+  const displayStatus = expiryInfo.statusLabel || ALERT_TYPE_LABELS[alert.alertType] || alert.alertType;
 
   const formatDate = (dateString) => {
     if (!dateString) return "-";
@@ -107,8 +133,17 @@ export function AlertDetailDialog({ alert, open, onClose, onUpdate }) {
         <div className="space-y-4">
           {/* Alert Type and Severity */}
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="text-base px-3 py-1">
-              {ALERT_TYPE_LABELS[alert.alertType] || alert.alertType}
+            <Badge 
+              variant="outline" 
+              className={`text-base px-3 py-1 ${
+                expiryInfo.isExpired 
+                  ? 'bg-red-100 text-red-800 border-red-200'
+                  : expiryInfo.statusLabel === 'Sắp hết hạn'
+                  ? 'bg-yellow-100 text-yellow-800 border-yellow-200'
+                  : ''
+              }`}
+            >
+              {displayStatus}
             </Badge>
             <Badge
               className={`text-base px-3 py-1 ${
@@ -221,15 +256,17 @@ export function AlertDetailDialog({ alert, open, onClose, onUpdate }) {
                   </p>
                   <p
                     className={`text-2xl font-bold ${
-                      alert.daysUntilExpiry <= 0
+                      expiryInfo.isExpired
                         ? "text-red-600"
-                        : alert.daysUntilExpiry <= 7
+                        : expiryInfo.daysUntilExpiry <= 7
                         ? "text-orange-600"
                         : "text-yellow-600"
                     }`}
                   >
-                    {alert.daysUntilExpiry !== undefined
-                      ? `${alert.daysUntilExpiry} ngày`
+                    {expiryInfo.isExpired
+                      ? "Đã hết hạn"
+                      : expiryInfo.daysUntilExpiry !== null
+                      ? `${expiryInfo.daysUntilExpiry} ngày`
                       : "-"}
                   </p>
                 </div>

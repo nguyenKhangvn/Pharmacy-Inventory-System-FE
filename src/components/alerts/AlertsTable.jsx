@@ -21,6 +21,30 @@ const formatDate = (dateString) => {
   return date.toLocaleDateString("vi-VN");
 };
 
+const getExpiryStatus = (expiryDate, alertType) => {
+  if (!expiryDate) return null;
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const expiry = new Date(expiryDate);
+  expiry.setHours(0, 0, 0, 0);
+  
+  const daysUntilExpiry = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+  
+  // Nếu đã hết hạn
+  if (daysUntilExpiry < 0) {
+    return { label: "Đã hết hạn", color: "bg-red-100 text-red-800 border-red-200" };
+  }
+  
+  // Nếu backend đánh dấu là EXPIRING_SOON thì hiển thị "Sắp hết hạn"
+  if (alertType === 'EXPIRING_SOON') {
+    return { label: "Sắp hết hạn", color: "bg-yellow-100 text-yellow-800 border-yellow-200" };
+  }
+  
+  return null;
+};
+
 const getStatusLabel = (alertType) => {
   switch (alertType) {
     case "OUT_OF_STOCK":
@@ -128,9 +152,6 @@ export function AlertsTable({
                   Mức tồn tối thiểu
                 </TableHead>
                 <TableHead className="font-semibold text-foreground">
-                  Tỷ lệ
-                </TableHead>
-                <TableHead className="font-semibold text-foreground">
                   Trạng thái
                 </TableHead>
                 <TableHead className="font-semibold text-foreground">
@@ -145,7 +166,7 @@ export function AlertsTable({
               {alerts.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={7}
+                    colSpan={6}
                     className="p-12 text-center text-muted-foreground"
                   >
                     <div className="flex flex-col items-center space-y-2">
@@ -156,19 +177,16 @@ export function AlertsTable({
                 </TableRow>
               ) : (
                 alerts.map((alert) => {
-                  const ratio =
-                    alert.daysUntilExpiry !== undefined
-                      ? `${alert.daysUntilExpiry} ngày`
-                      : alert.currentStock && alert.productId?.minimumStock
-                      ? `${Math.round(
-                          (alert.currentStock / alert.productId.minimumStock) *
-                            100
-                        )}%`
-                      : "-";
-
                   const currentStock =
                     alert.currentStock || alert.inventoryLotId?.quantity || 0;
                   const unit = alert.productId?.unit || "viên";
+                  
+                  // Check expiry status dynamically
+                  const expiryStatus = getExpiryStatus(alert.expiryDate, alert.alertType);
+                  const statusInfo = expiryStatus || {
+                    label: getStatusLabel(alert.alertType),
+                    color: getStatusColor(alert.alertType)
+                  };
 
                   return (
                     <TableRow key={alert._id} className="hover:bg-muted/30">
@@ -189,22 +207,11 @@ export function AlertsTable({
                         {alert.productId?.minimumStock || 0} {unit}
                       </TableCell>
                       <TableCell>
-                        <span
-                          className={
-                            alert.daysUntilExpiry <= 7
-                              ? "text-red-600 font-semibold"
-                              : "text-muted-foreground"
-                          }
-                        >
-                          {ratio}
-                        </span>
-                      </TableCell>
-                      <TableCell>
                         <Badge
                           variant="outline"
-                          className={`${getStatusColor(alert.alertType)}`}
+                          className={`${statusInfo.color}`}
                         >
-                          {getStatusLabel(alert.alertType)}
+                          {statusInfo.label}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-muted-foreground">
