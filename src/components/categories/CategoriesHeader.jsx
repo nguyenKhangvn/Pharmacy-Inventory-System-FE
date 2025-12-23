@@ -37,7 +37,7 @@ export function CategoriesHeader({ onAddClick, onSearch }) {
         </div>
 
         <Button
-          className="bg-medical-blue hover:bg-medical-blue/90 text-black"
+          className="bg-medical-blue hover:bg-medical-blue/90 text-white"
           onClick={onAddClick}
         >
           <Plus className="w-4 h-4 mr-2" />
