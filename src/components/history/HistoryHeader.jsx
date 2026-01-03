@@ -12,8 +12,16 @@ import { useEffect, useRef, useState } from "react";
 
 export function HistoryHeader({ onFilterChange }) {
   const searchTimeoutRef = useRef(null);
+  const currentFiltersRef = useRef({});
   const [isCustom, setIsCustom] = useState(false);
   const [customRange, setCustomRange] = useState({ start: "", end: "" });
+  const [dateRange, setDateRange] = useState("30days");
+  const [transactionType, setTransactionType] = useState("INBOUND");
+
+  const updateFilters = (newFilters) => {
+    currentFiltersRef.current = { ...currentFiltersRef.current, ...newFilters };
+    onFilterChange(currentFiltersRef.current);
+  };
 
   const handleSearchChange = (e) => {
     const value = e.target.value;
@@ -21,11 +29,11 @@ export function HistoryHeader({ onFilterChange }) {
       clearTimeout(searchTimeoutRef.current);
     }
 
-    // 2. Đặt timeout mới: Chỉ gọi onFilterChange sau khi ngừng gõ 500ms
     searchTimeoutRef.current = setTimeout(() => {
-      onFilterChange({ lotNumber: value });
+      updateFilters({ lotNumber: value });
     }, 500);
   };
+
   // Hàm tạo thời gian bắt đầu của ngày (00:00:00)
   const getStartOfDay = (date) => {
     const d = new Date(date);
@@ -47,37 +55,33 @@ export function HistoryHeader({ onFilterChange }) {
 
   const getDateRange = (value) => {
     const now = new Date();
-    let start = new Date();
+    const end = getEndOfDay(now);
 
     if (value === "today") {
-      start = getStartOfDay(now);
-      const end = getEndOfDay(now);
+      const start = getStartOfDay(now);
       return {
         startDate: toISOStringLocal(start),
         endDate: toISOStringLocal(end),
       };
     } else if (value === "7days") {
-      start.setDate(start.getDate() - 6); // -6 để bao gồm cả hôm nay (7 ngày)
-      start = getStartOfDay(start);
-      const end = getEndOfDay(now);
+      const start = new Date();
+      start.setDate(now.getDate() - 6); // -6 để bao gồm cả hôm nay (7 ngày)
       return {
-        startDate: toISOStringLocal(start),
+        startDate: toISOStringLocal(getStartOfDay(start)),
         endDate: toISOStringLocal(end),
       };
     } else if (value === "30days") {
-      start.setDate(start.getDate() - 29); // -29 để bao gồm cả hôm nay (30 ngày)
-      start = getStartOfDay(start);
-      const end = getEndOfDay(now);
+      const start = new Date();
+      start.setDate(now.getDate() - 29); // -29 để bao gồm cả hôm nay (30 ngày)
       return {
-        startDate: toISOStringLocal(start),
+        startDate: toISOStringLocal(getStartOfDay(start)),
         endDate: toISOStringLocal(end),
       };
     } else if (value === "90days") {
-      start.setDate(start.getDate() - 89); // -89 để bao gồm cả hôm nay (90 ngày)
-      start = getStartOfDay(start);
-      const end = getEndOfDay(now);
+      const start = new Date();
+      start.setDate(now.getDate() - 89); // -89 để bao gồm cả hôm nay (90 ngày)
       return {
-        startDate: toISOStringLocal(start),
+        startDate: toISOStringLocal(getStartOfDay(start)),
         endDate: toISOStringLocal(end),
       };
     }
@@ -85,26 +89,27 @@ export function HistoryHeader({ onFilterChange }) {
     return null;
   };
   const handleTypeChange = (value) => {
-    onFilterChange({ type: value });
+    setTransactionType(value);
+    updateFilters({ type: value });
   };
 
   const handleDateChange = (value) => {
+    setDateRange(value);
+
     if (value === "custom") {
       setIsCustom(true);
-      // Không gọi onFilterChange ngay lúc này, đợi user chọn ngày
       return;
     }
 
     setIsCustom(false);
     const range = getDateRange(value);
 
-    onFilterChange({
+    updateFilters({
       ...range,
       dateRange: value,
     });
   };
 
-  // Xử lý custom date
   const handleCustomDateChange = (type, value) => {
     const updated = { ...customRange, [type]: value };
     setCustomRange(updated);
@@ -113,7 +118,7 @@ export function HistoryHeader({ onFilterChange }) {
       const startDate = getStartOfDay(new Date(updated.start));
       const endDate = getEndOfDay(new Date(updated.end));
 
-      onFilterChange({
+      updateFilters({
         startDate: toISOStringLocal(startDate),
         endDate: toISOStringLocal(endDate),
         dateRange: "custom",
@@ -133,11 +138,14 @@ export function HistoryHeader({ onFilterChange }) {
   // Default load: INBOUND + 30 ngày
   useEffect(() => {
     const range = getDateRange("30days");
-    onFilterChange({
+    const initialFilters = {
       type: "INBOUND",
       dateRange: "30days",
       ...range,
-    });
+    };
+
+    currentFiltersRef.current = initialFilters;
+    onFilterChange(initialFilters);
 
     // Set default custom range là 30 ngày gần nhất
     const today = new Date();
@@ -175,7 +183,7 @@ export function HistoryHeader({ onFilterChange }) {
             </div>
 
             {/* Loại giao dịch */}
-            <Select defaultValue="INBOUND" onValueChange={handleTypeChange}>
+            <Select value={transactionType} onValueChange={handleTypeChange}>
               <SelectTrigger className="bg-background">
                 <SelectValue placeholder="Loại giao dịch" />
               </SelectTrigger>
@@ -186,7 +194,7 @@ export function HistoryHeader({ onFilterChange }) {
             </Select>
 
             {/* Lọc thời gian */}
-            <Select defaultValue="30days" onValueChange={handleDateChange}>
+            <Select value={dateRange} onValueChange={handleDateChange}>
               <SelectTrigger className="bg-background">
                 <SelectValue placeholder="Khoảng thời gian" />
               </SelectTrigger>

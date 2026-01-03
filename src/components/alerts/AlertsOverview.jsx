@@ -2,7 +2,19 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Package, PackageX } from "lucide-react";
 import { useState, useEffect } from "react";
-import { getAlertSummary } from "@/services/alertService";
+import { getAlertsList } from "@/services/alertService";
+
+const isExpired = (expiryDate) => {
+  if (!expiryDate) return false;
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const expiry = new Date(expiryDate);
+  expiry.setHours(0, 0, 0, 0);
+  
+  return expiry < today;
+};
 
 export function AlertsOverview() {
   const [summary, setSummary] = useState({
@@ -16,15 +28,37 @@ export function AlertsOverview() {
     const loadSummary = async () => {
       try {
         setLoading(true);
-        const response = await getAlertSummary();
+        
+        // Fetch all active alerts to calculate accurate counts
+        const response = await getAlertsList({
+          page: 1,
+          limit: 9999,
+          status: 'ACTIVE',
+        });
 
         if (response.success && response.data) {
-          const {
-            expiringSoon = 0,
-            lowStock = 0,
-            outOfStock = 0,
-          } = response.data;
-          setSummary({ expiringSoon, lowStock, outOfStock });
+          const alerts = response.data;
+          
+          // Đếm "Sắp hết hạn": alertType = EXPIRING_SOON VÀ chưa hết hạn
+          const expiringSoonCount = alerts.filter(alert => 
+            alert.alertType === 'EXPIRING_SOON' && 
+            alert.expiryDate && 
+            !isExpired(alert.expiryDate)
+          ).length;
+          
+          const lowStockCount = alerts.filter(alert => 
+            alert.alertType === 'LOW_STOCK'
+          ).length;
+          
+          const outOfStockCount = alerts.filter(alert => 
+            alert.alertType === 'OUT_OF_STOCK'
+          ).length;
+          
+          setSummary({ 
+            expiringSoon: expiringSoonCount, 
+            lowStock: lowStockCount, 
+            outOfStock: outOfStockCount 
+          });
         }
       } catch (error) {
         console.error("Error loading alert summary:", error);

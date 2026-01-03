@@ -62,6 +62,7 @@ export function ExportReceiptForm() {
   const [productSuggestions, setProductSuggestions] = useState([]);
   const [searchingProduct, setSearchingProduct] = useState("");
   const [showSuggestions, setShowSuggestions] = useState("");
+  const [searchCompleted, setSearchCompleted] = useState("");
   const searchTimeoutRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -121,20 +122,24 @@ export function ExportReceiptForm() {
     if (!query || query.trim().length < 2) {
       setProductSuggestions([]);
       setShowSuggestions("");
+      setSearchCompleted("");
       return;
     }
 
     try {
       setSearchingProduct(itemId);
+      setSearchCompleted("");
       const response = await inventoryIssueService.getProductSuggestions({
         warehouseId,
         q: query.trim(),
       });
       setProductSuggestions(response.data || []);
       setShowSuggestions(itemId);
+      setSearchCompleted(itemId);
     } catch (err) {
       console.error("Failed to search products:", err);
       setProductSuggestions([]);
+      setSearchCompleted(itemId);
     } finally {
       setSearchingProduct("");
     }
@@ -162,6 +167,7 @@ export function ExportReceiptForm() {
     );
     setShowSuggestions("");
     setProductSuggestions([]);
+    setSearchCompleted("");
   };
 
   const updateDrugItem = (id, field, value) => {
@@ -504,56 +510,67 @@ export function ExportReceiptForm() {
                           )}
                         </div>
                         {/* Suggestion box nằm ngoài relative, dùng fixed và top theo vị trí input */}
-                        {showSuggestions === item.id &&
-                          productSuggestions.length > 0 &&
-                          inputRef.current && (
-                            <div
-                              className="fixed z-[9999] w-[400px] bg-white border border-border rounded-md shadow-lg max-h-60 overflow-auto"
-                              style={{
-                                left:
-                                  inputRef.current.getBoundingClientRect()
-                                    .left + window.scrollX,
-                                top:
-                                  inputRef.current.getBoundingClientRect().top +
-                                  window.scrollY -
-                                  8 -
-                                  240, // 8px margin, 240px (max-h-60) phía trên
-                                // Nếu muốn sát input thì bỏ - 8 - 240, chỉ cần - suggestionBoxHeight
-                              }}
-                            >
-                              {productSuggestions.map((product) => (
-                                <div
-                                  key={product.id}
-                                  onClick={() =>
-                                    selectProduct(item.id, product)
-                                  }
-                                  className="p-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0"
-                                >
-                                  <div className="font-medium text-foreground">
-                                    {product.name}
+                        {showSuggestions === item.id && inputRef.current && (
+                          <div
+                            className="fixed z-[9999] w-[400px] bg-white border border-border rounded-md shadow-lg max-h-60 overflow-auto"
+                            style={{
+                              left:
+                                inputRef.current.getBoundingClientRect().left +
+                                window.scrollX,
+                              top:
+                                inputRef.current.getBoundingClientRect().top +
+                                window.scrollY -
+                                8 -
+                                240, // 8px margin, 240px (max-h-60) phía trên
+                              // Nếu muốn sát input thì bỏ - 8 - 240, chỉ cần - suggestionBoxHeight
+                            }}
+                          >
+                            {productSuggestions.length > 0
+                              ? productSuggestions.map((product) => (
+                                  <div
+                                    key={product.id}
+                                    onClick={() =>
+                                      selectProduct(item.id, product)
+                                    }
+                                    className="p-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0"
+                                  >
+                                    <div className="font-medium text-foreground">
+                                      {product.name}
+                                    </div>
+                                    <div className="text-xs text-muted-foreground mt-1">
+                                      Mã: {product.code || product.sku} | Tồn
+                                      kho: {product.availableQty} {product.unit}{" "}
+                                      | Giá:{" "}
+                                      {product.unitPrice.toLocaleString(
+                                        "vi-VN"
+                                      )}
+                                      ₫
+                                      {product.nearestExpiry && (
+                                        <span className="ml-2">
+                                          | HSD:{" "}
+                                          {new Date(
+                                            product.nearestExpiry
+                                          ).toLocaleDateString("vi-VN")}
+                                        </span>
+                                      )}
+                                      {product.lotNumber && (
+                                        <span className="ml-2">
+                                          | Lô: {product.lotNumber}
+                                        </span>
+                                      )}
+                                    </div>
                                   </div>
-                                  <div className="text-xs text-muted-foreground mt-1">
-                                    Mã: {product.code || product.sku} | Tồn kho:{" "}
-                                    {product.availableQty} {product.unit} | Giá:{" "}
-                                    {product.unitPrice.toLocaleString("vi-VN")}₫
-                                    {product.nearestExpiry && (
-                                      <span className="ml-2">
-                                        | HSD:{" "}
-                                        {new Date(
-                                          product.nearestExpiry
-                                        ).toLocaleDateString("vi-VN")}
-                                      </span>
-                                    )}
-                                    {product.lotNumber && (
-                                      <span className="ml-2">
-                                        | Lô: {product.lotNumber}
-                                      </span>
-                                    )}
+                                ))
+                              : searchCompleted === item.id && (
+                                  <div className="p-3 text-center text-muted-foreground">
+                                    <AlertCircle className="w-5 h-5 mx-auto mb-2 text-amber-500" />
+                                    <p className="text-sm">
+                                      Thuốc này không tồn tại trong hệ thống
+                                    </p>
                                   </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
+                                )}
+                          </div>
+                        )}
                       </td>
                       <td className="p-3">
                         <div className="text-sm text-muted-foreground">
